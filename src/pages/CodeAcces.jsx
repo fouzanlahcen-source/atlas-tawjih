@@ -1,21 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-// ── Liste des codes valides ────────────────────────────────
-// Pour ajouter un code : rajoute une ligne ici ex: 'TAWJIH-2026'
-// Les codes marqués ADMIN ne sont jamais bloqués (pour tests internes)
-const CODES_VALIDES = [
-  'ATLAS-2025',
-  'TAWJIH-01',
-  'TAWJIH-02',
-  'TAWJIH-03',
-  'MAROC-2025',
-  'BAC-ATLAS',
-  'ADMIN-TEST',   // ← code admin : jamais bloqué, pour tes tests
-]
-
-// ── Gestion usage unique ───────────────────────────────────
-const CODES_ADMIN = ['ADMIN-TEST'] // ces codes restent toujours valides
+// ── Codes importés depuis src/config/codes.js ─────────────
+// Pour modifier les codes : ouvre src/config/codes.js
+import { CODES_VALIDES, CODES_ADMIN } from '../config/codes'
 
 const getCodesUtilises = () => {
   try {
