@@ -1532,19 +1532,11 @@ export default function Resultats() {
             <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
               <span>📚</span> {lang==='fr' ? 'Domaines & sous-domaines — Plan A' : 'Fields & sub-fields — Plan A'}
             </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
               {profilDom.domaines.map((d,i) => (
-                <div key={i} style={{ border:`1px solid ${DIM_COLORS[classement[0]]}25`, borderRadius:10, overflow:'hidden' }}>
-                  <div style={{ background:`${DIM_COLORS[classement[0]]}12`, padding:'8px 14px', fontWeight:700, fontSize:12, color:DIM_COLORS[classement[0]], display:'flex', alignItems:'center', gap:6 }}>
-                    <span style={{ width:6, height:6, borderRadius:'50%', background:DIM_COLORS[classement[0]], display:'inline-block' }}></span>
-                    {d.nom}
-                  </div>
-                  <div style={{ padding:'8px 12px', display:'flex', flexWrap:'wrap', gap:5 }}>
-                    {d.sous.map((s,j) => (
-                      <span key={j} style={{ padding:'3px 10px', background:'#F8FAFC', border:'1px solid #E2E8F0', borderRadius:20, fontSize:11, color:'#475569' }}>{s}</span>
-                    ))}
-                  </div>
-                </div>
+                <span key={i} style={{ padding:'6px 14px', background:`${DIM_COLORS[classement[0]]}12`, border:`1px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:20, fontSize:12, fontWeight:500, color:DIM_COLORS[classement[0]] }}>
+                  {d}
+                </span>
               ))}
             </div>
           </div>
@@ -1606,19 +1598,11 @@ export default function Resultats() {
                 <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
                   <span>📚</span> {lang==='fr' ? 'Domaines & sous-domaines — Plan B' : 'Fields & sub-fields — Plan B'}
                 </div>
-                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                   {profilB.domaines.map((d,i) => (
-                    <div key={i} style={{ border:`1px solid ${colorB}25`, borderRadius:10, overflow:'hidden' }}>
-                      <div style={{ background:`${colorB}12`, padding:'8px 14px', fontWeight:700, fontSize:12, color:colorB, display:'flex', alignItems:'center', gap:6 }}>
-                        <span style={{ width:6, height:6, borderRadius:'50%', background:colorB, display:'inline-block' }}></span>
-                        {d.nom}
-                      </div>
-                      <div style={{ padding:'8px 12px', display:'flex', flexWrap:'wrap', gap:5 }}>
-                        {d.sous.map((s,j) => (
-                          <span key={j} style={{ padding:'3px 10px', background:'#F8FAFC', border:'1px solid #E2E8F0', borderRadius:20, fontSize:11, color:'#475569' }}>{s}</span>
-                        ))}
-                      </div>
-                    </div>
+                    <span key={i} style={{ padding:'6px 14px', background:`${colorB}12`, border:`1px solid ${colorB}30`, borderRadius:20, fontSize:12, fontWeight:500, color:colorB }}>
+                      {d}
+                    </span>
                   ))}
                 </div>
               </div>
