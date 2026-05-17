@@ -1465,275 +1465,229 @@ export default function Resultats() {
         </div>
       </div>
 
-      <div style={{ flex:1, padding:'20px 24px', maxWidth:720, margin:'0 auto', width:'100%' }}>
+      <div style={{ flex:1, padding:'24px 20px', maxWidth:800, margin:'0 auto', width:'100%' }}>
 
-        {/* DESCRIPTION */}
-        <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'18px', marginBottom:14, borderLeft:`4px solid ${DIM_COLORS[classement[0]]}` }}>
-          <div style={{ fontSize:13, fontWeight:600, color:'#1E293B', marginBottom:6 }}>
-            {lang==='fr' ? '👤 Description de ton profil' : '👤 Your profile description'}
+        {/* ── PROFIL EN DETAIL ── */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ background:`linear-gradient(135deg,${DIM_COLORS[classement[0]]},${DIM_COLORS[classement[0]]}CC)`, borderRadius:14, padding:'18px 20px', marginBottom:14 }}>
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1, marginBottom:4 }}>
+              {lang==='fr' ? 'PROFIL EN DETAIL' : 'PROFILE IN DETAIL'}
+            </div>
+            <div style={{ fontSize:15, color:'#fff', lineHeight:1.7 }}>{profilDom.desc}</div>
           </div>
-          <div style={{ fontSize:13, color:'#475569', lineHeight:1.7 }}>{profilDom.desc}</div>
+
+          {/* Tu seras bon dans */}
+          {profilDom.bonsEn && (
+            <div style={{ background:'#fff', border:`1.5px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:12, padding:'16px 18px', marginBottom:14 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:DIM_COLORS[classement[0]], marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+                <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+                {lang==='fr' ? 'Tu seras très bon dans' : 'You will excel in'}
+              </div>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                {profilDom.bonsEn.map((b,i) => (
+                  <span key={i} style={{ padding:'5px 14px', background:`${DIM_COLORS[classement[0]]}12`, border:`1px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:20, fontSize:12, fontWeight:500, color:DIM_COLORS[classement[0]] }}>{b}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* SCORES BARRES */}
+        {/* ── SCORES ── */}
         <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'18px', marginBottom:14 }}>
-          <div style={{ fontSize:13, fontWeight:600, color:'#1E293B', marginBottom:14 }}>
-            {lang==='fr' ? '📊 Tes scores RIASEC' : '📊 Your RIASEC scores'}
+          <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:3, height:14, background:'#1E293B', borderRadius:2, display:'inline-block' }}></span>
+            {lang==='fr' ? 'Tes scores RIASEC' : 'Your RIASEC scores'}
           </div>
           {getClassement(scores).map((dim, rank) => (
             <div key={dim} style={{ marginBottom:10 }}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                <span style={{ fontSize:12, fontWeight:600, color:DIM_COLORS[dim] }}>
-                  {rank===0?'🥇':rank===1?'🥈':rank===2?'🥉':'  '} {dim} — {PROFILS[dim][lang].nom}
+                <span style={{ fontSize:12, fontWeight:600, color:DIM_COLORS[dim], display:'flex', alignItems:'center', gap:5 }}>
+                  <span style={{ fontSize:14 }}>{rank===0?'🥇':rank===1?'🥈':rank===2?'🥉':''}</span>
+                  {dim} — {PROFILS[dim][lang].nom}
                 </span>
                 <span style={{ fontSize:12, fontWeight:700, color:DIM_COLORS[dim] }}>{scores[dim]}%</span>
               </div>
-              <div style={{ height:10, background:'#F1F5F9', borderRadius:5, overflow:'hidden' }}>
-                <div style={{ width:`${scores[dim]}%`, height:'100%', background:DIM_COLORS[dim], borderRadius:5, transition:'width 1s ease' }} />
+              <div style={{ height:8, background:'#F1F5F9', borderRadius:4, overflow:'hidden' }}>
+                <div style={{ width:`${scores[dim]}%`, height:'100%', background:DIM_COLORS[dim], borderRadius:4, transition:'width 1s ease' }} />
               </div>
             </div>
           ))}
         </div>
 
-        {/* POINTS FORTS */}
+        {/* ── POINTS FORTS ── */}
         <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'18px', marginBottom:14 }}>
-          <div style={{ fontSize:13, fontWeight:600, color:'#1E293B', marginBottom:12 }}>
-            {lang==='fr' ? '⭐ Tes points forts' : '⭐ Your strengths'}
+          <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+            {lang==='fr' ? 'Points forts' : 'Key strengths'}
           </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
             {profilDom.forts.map(([titre,desc],i) => (
-              <div key={i} style={{ display:'flex', gap:10, padding:'8px 12px', background:DIM_BG[classement[0]], border:`1px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:8 }}>
-                <span style={{ fontWeight:700, color:DIM_COLORS[classement[0]], minWidth:140, fontSize:12 }}>{titre}</span>
-                <span style={{ fontSize:12, color:'#475569', flex:1 }}>{desc}</span>
+              <div key={i} style={{ display:'grid', gridTemplateColumns:'160px 1fr', gap:12, padding:'10px 12px', background:i%2===0?`${DIM_COLORS[classement[0]]}08`:'#fff', borderRadius:8 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <span style={{ width:3, height:'100%', minHeight:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block', flexShrink:0 }}></span>
+                  <span style={{ fontSize:12, fontWeight:700, color:DIM_COLORS[classement[0]] }}>{titre}</span>
+                </div>
+                <span style={{ fontSize:12, color:'#475569', lineHeight:1.6 }}>{desc}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ══ PLAN A ══ */}
-        <div style={{ marginBottom:20 }}>
-          {/* Badge Plan A */}
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-            <div style={{ background:`linear-gradient(135deg,${DIM_COLORS[classement[0]]},${DIM_COLORS[classement[0]]}99)`, borderRadius:10, padding:'8px 18px', display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize:18 }}>🥇</span>
+        {/* ── PLAN A ── */}
+        <div style={{ marginBottom:6 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+            <div style={{ background:`linear-gradient(135deg,${DIM_COLORS[classement[0]]},${DIM_COLORS[classement[0]]}99)`, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:16 }}>🥇</span>
               <div>
-                <div style={{ fontSize:11, color:'rgba(255,255,255,0.8)', fontWeight:600, letterSpacing:1 }}>
-                  {lang==='fr' ? 'PLAN A — PROFIL DOMINANT' : 'PLAN A — DOMINANT PROFILE'}
-                </div>
-                <div style={{ fontSize:15, color:'#fff', fontWeight:800 }}>
-                  {classement[0]} — {profilDom.nom} ({scores[classement[0]]}%)
-                </div>
+                <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?'PLAN A — PRIORITÉ':'PLAN A — PRIORITY'}</div>
+                <div style={{ fontSize:13, color:'#fff', fontWeight:700 }}>{classement[0]} — {profilDom.nom} ({scores[classement[0]]}%)</div>
               </div>
             </div>
-            <div style={{ flex:1, height:2, background:`linear-gradient(90deg,${DIM_COLORS[classement[0]]}40,transparent)`, borderRadius:1 }} />
           </div>
 
-          <div style={{ background:'#fff', border:`2px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:12, padding:'18px', marginBottom:10 }}>
-            <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
-              <span>📚</span> {lang==='fr' ? 'Domaines & sous-domaines — Plan A' : 'Fields & sub-fields — Plan A'}
+          {/* Domaines Plan A */}
+          <div style={{ background:'#fff', border:`1.5px solid ${DIM_COLORS[classement[0]]}25`, borderRadius:12, padding:'16px 18px', marginBottom:10 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:DIM_COLORS[classement[0]], marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+              <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+              {lang==='fr' ? "Domaines d'études" : 'Fields of study'}
             </div>
-            <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
               {profilDom.domaines.map((d,i) => (
-                <span key={i} style={{ padding:'6px 14px', background:`${DIM_COLORS[classement[0]]}12`, border:`1px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:20, fontSize:12, fontWeight:500, color:DIM_COLORS[classement[0]] }}>
-                  {d}
-                </span>
+                <span key={i} style={{ padding:'5px 12px', background:`${DIM_COLORS[classement[0]]}10`, border:`1px solid ${DIM_COLORS[classement[0]]}25`, borderRadius:20, fontSize:12, color:DIM_COLORS[classement[0]], fontWeight:500 }}>{d}</span>
               ))}
             </div>
           </div>
 
-          <div style={{ background:'#fff', border:`2px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:12, padding:'18px' }}>
-            <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
-              <span>💼</span> {lang==='fr' ? 'Métiers recommandés — Plan A' : 'Recommended careers — Plan A'}
+          {/* Métiers Plan A */}
+          <div style={{ background:'#fff', border:`1.5px solid ${DIM_COLORS[classement[0]]}25`, borderRadius:12, padding:'16px 18px' }}>
+            <div style={{ fontSize:12, fontWeight:700, color:DIM_COLORS[classement[0]], marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
+              <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+              {lang==='fr' ? 'Métiers recommandés' : 'Recommended careers'}
             </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {profilDom.metiers.map(({cat,liste},ci) => (
-                <div key={ci}>
-                  <div style={{ fontSize:12, fontWeight:700, color:DIM_COLORS[classement[0]], background:`${DIM_COLORS[classement[0]]}15`, padding:'5px 10px', borderRadius:6, marginBottom:5 }}>{cat}</div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:5 }}>
-                    {liste.map(([nom,desc],i) => (
-                      <div key={i} style={{ padding:'7px 10px', background:`${DIM_COLORS[classement[0]]}08`, border:`1px solid ${DIM_COLORS[classement[0]]}20`, borderRadius:7 }}>
-                        <div style={{ fontSize:12, fontWeight:600, color:DIM_COLORS[classement[0]], marginBottom:2 }}>✓ {nom}</div>
-                        <div style={{ fontSize:11, color:'#64748B' }}>{desc}</div>
-                      </div>
-                    ))}
-                  </div>
+            {profilDom.metiers.map(({cat,liste},ci) => (
+              <div key={ci} style={{ marginBottom:12 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'#fff', background:DIM_COLORS[classement[0]], padding:'4px 10px', borderRadius:6, display:'inline-block', marginBottom:8 }}>{cat}</div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:6 }}>
+                  {liste.map(([nom,desc],i) => (
+                    <div key={i} style={{ padding:'8px 12px', background:`${DIM_COLORS[classement[0]]}06`, border:`1px solid ${DIM_COLORS[classement[0]]}20`, borderRadius:8 }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:DIM_COLORS[classement[0]], marginBottom:3 }}>✓ {nom}</div>
+                      <div style={{ fontSize:11, color:'#64748B', lineHeight:1.5 }}>{desc}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* ══ SÉPARATEUR ══ */}
-        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+        {/* ── SEPARATEUR ── */}
+        <div style={{ display:'flex', alignItems:'center', gap:10, margin:'20px 0' }}>
           <div style={{ flex:1, height:1, background:'linear-gradient(90deg,transparent,#E2E8F0)' }} />
-          <div style={{ background:'#F1F5F9', border:'1px solid #E2E8F0', borderRadius:20, padding:'6px 16px', fontSize:12, color:'#64748B', fontWeight:600, whiteSpace:'nowrap' }}>
+          <div style={{ background:'#F1F5F9', border:'1px solid #E2E8F0', borderRadius:20, padding:'5px 14px', fontSize:11, color:'#64748B', fontWeight:600 }}>
             {lang==='fr' ? '↓ Alternative complémentaire ↓' : '↓ Complementary alternative ↓'}
           </div>
           <div style={{ flex:1, height:1, background:'linear-gradient(90deg,#E2E8F0,transparent)' }} />
         </div>
 
-        {/* ══ PLAN B ══ */}
+        {/* ── PLAN B ── */}
         {(() => {
-          const profilB = PROFILS[classement[1]][lang]
-          const colorB  = DIM_COLORS[classement[1]]
+          const profB2  = PROFILS[classement[1]][lang]
+          const colorB2 = DIM_COLORS[classement[1]]
           return (
-            <div style={{ marginBottom:20 }}>
-              {/* Badge Plan B */}
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-                <div style={{ background:`linear-gradient(135deg,${colorB},${colorB}99)`, borderRadius:10, padding:'8px 18px', display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:18 }}>🥈</span>
+            <div style={{ marginBottom:6 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                <div style={{ background:`linear-gradient(135deg,${colorB2},${colorB2}99)`, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:16 }}>🥈</span>
                   <div>
-                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.8)', fontWeight:600, letterSpacing:1 }}>
-                      {lang==='fr' ? 'PLAN B — PROFIL SECONDAIRE' : 'PLAN B — SECONDARY PROFILE'}
-                    </div>
-                    <div style={{ fontSize:15, color:'#fff', fontWeight:800 }}>
-                      {classement[1]} — {profilB.nom} ({scores[classement[1]]}%)
-                    </div>
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?'PLAN B — ALTERNATIVE':'PLAN B — ALTERNATIVE'}</div>
+                    <div style={{ fontSize:13, color:'#fff', fontWeight:700 }}>{classement[1]} — {profB2.nom} ({scores[classement[1]]}%)</div>
                   </div>
                 </div>
-                <div style={{ flex:1, height:2, background:`linear-gradient(90deg,${colorB}40,transparent)`, borderRadius:1 }} />
               </div>
-
-              <div style={{ background:'#fff', border:`2px solid ${colorB}30`, borderRadius:12, padding:'18px', marginBottom:10 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
-                  <span>📚</span> {lang==='fr' ? 'Domaines & sous-domaines — Plan B' : 'Fields & sub-fields — Plan B'}
+              <div style={{ background:'#fff', border:`1.5px solid ${colorB2}25`, borderRadius:12, padding:'16px 18px', marginBottom:10 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:colorB2, marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+                  <span style={{ width:3, height:14, background:colorB2, borderRadius:2, display:'inline-block' }}></span>
+                  {lang==='fr' ? "Domaines d'études" : 'Fields of study'}
                 </div>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                  {profilB.domaines.map((d,i) => (
-                    <span key={i} style={{ padding:'6px 14px', background:`${colorB}12`, border:`1px solid ${colorB}30`, borderRadius:20, fontSize:12, fontWeight:500, color:colorB }}>
-                      {d}
-                    </span>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
+                  {profB2.domaines.map((d,i) => (
+                    <span key={i} style={{ padding:'5px 12px', background:`${colorB2}10`, border:`1px solid ${colorB2}25`, borderRadius:20, fontSize:12, color:colorB2, fontWeight:500 }}>{d}</span>
                   ))}
                 </div>
               </div>
-
-              <div style={{ background:'#fff', border:`2px solid ${colorB}30`, borderRadius:12, padding:'18px' }}>
-                <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
-                  <span>💼</span> {lang==='fr' ? 'Métiers recommandés — Plan B' : 'Recommended careers — Plan B'}
+              <div style={{ background:'#fff', border:`1.5px solid ${colorB2}25`, borderRadius:12, padding:'16px 18px' }}>
+                <div style={{ fontSize:12, fontWeight:700, color:colorB2, marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
+                  <span style={{ width:3, height:14, background:colorB2, borderRadius:2, display:'inline-block' }}></span>
+                  {lang==='fr' ? 'Métiers recommandés' : 'Recommended careers'}
                 </div>
-                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                  {profilB.metiers.map(({cat,liste},ci) => (
-                    <div key={ci}>
-                      <div style={{ fontSize:12, fontWeight:700, color:colorB, background:`${colorB}15`, padding:'5px 10px', borderRadius:6, marginBottom:5 }}>{cat}</div>
-                      <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:5 }}>
-                        {liste.map(([nom,desc],i) => (
-                          <div key={i} style={{ padding:'7px 10px', background:`${colorB}08`, border:`1px solid ${colorB}20`, borderRadius:7 }}>
-                            <div style={{ fontSize:12, fontWeight:600, color:colorB, marginBottom:2 }}>✓ {nom}</div>
-                            <div style={{ fontSize:11, color:'#64748B' }}>{desc}</div>
-                          </div>
-                        ))}
-                      </div>
+                {profB2.metiers.map(({cat,liste},ci) => (
+                  <div key={ci} style={{ marginBottom:12 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:'#fff', background:colorB2, padding:'4px 10px', borderRadius:6, display:'inline-block', marginBottom:8 }}>{cat}</div>
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:6 }}>
+                      {liste.map(([nom,desc],i) => (
+                        <div key={i} style={{ padding:'8px 12px', background:`${colorB2}06`, border:`1px solid ${colorB2}20`, borderRadius:8 }}>
+                          <div style={{ fontSize:12, fontWeight:600, color:colorB2, marginBottom:3 }}>✓ {nom}</div>
+                          <div style={{ fontSize:11, color:'#64748B', lineHeight:1.5 }}>{desc}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
           )
         })()}
 
-        {/* ENVIRONNEMENT */}
-        <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'18px', marginBottom:14 }}>
-          <div style={{ fontSize:13, fontWeight:600, color:'#1E293B', marginBottom:8 }}>
-            {lang==='fr' ? '🏢 Environnement de travail idéal' : '🏢 Ideal work environment'}
+        {/* ── ENVIRONNEMENT ── */}
+        <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'18px', marginBottom:14, marginTop:20 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+            {lang==='fr' ? 'Environnement de travail idéal' : 'Ideal work environment'}
           </div>
-          <div style={{ fontSize:13, color:'#475569', lineHeight:1.7 }}>{profilDom.env}</div>
+          <div style={{ fontSize:13, color:'#475569', lineHeight:1.7, background:`${DIM_COLORS[classement[0]]}08`, borderRadius:8, padding:'12px 14px', borderLeft:`3px solid ${DIM_COLORS[classement[0]]}` }}>
+            {profilDom.env}
+          </div>
           {profilDom.envIdeal && (
-            <div style={{ marginTop:10, display:'flex', flexWrap:'wrap', gap:6 }}>
+            <div style={{ marginTop:10, display:'flex', flexWrap:'wrap', gap:7 }}>
               {profilDom.envIdeal.map((e,i) => (
-                <span key={i} style={{ padding:'4px 10px', background:DIM_BG[classement[0]], border:`1px solid ${DIM_COLORS[classement[0]]}30`, borderRadius:20, fontSize:11, color:DIM_COLORS[classement[0]] }}>{e}</span>
+                <span key={i} style={{ padding:'5px 12px', background:`${DIM_COLORS[classement[0]]}08`, border:`1px solid ${DIM_COLORS[classement[0]]}25`, borderRadius:20, fontSize:11, color:DIM_COLORS[classement[0]] }}>{e}</span>
               ))}
             </div>
           )}
         </div>
 
-        {/* NOTE PARENTS */}
+        {/* ── A EVITER ── */}
+        {profilDom.eviter && (
+          <div style={{ background:'#fff', border:'1px solid #FECACA', borderRadius:12, padding:'18px', marginBottom:14 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'#DC2626', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
+              <span style={{ width:3, height:14, background:'#DC2626', borderRadius:2, display:'inline-block' }}></span>
+              {lang==='fr' ? 'À éviter' : 'To avoid'}
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {profilDom.eviter.map(([titre,desc],i) => (
+                <div key={i} style={{ padding:'10px 14px', background:'#FEF2F2', borderRadius:8, borderLeft:'3px solid #EF4444' }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:'#DC2626', marginBottom:4 }}>✕ {titre}</div>
+                  <div style={{ fontSize:12, color:'#7F1D1D', lineHeight:1.6 }}>{desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── NOTE PARENTS ── */}
         <div style={{ background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:12, padding:'18px', marginBottom:20 }}>
-          <div style={{ fontSize:13, fontWeight:600, color:'#92400E', marginBottom:8 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#92400E', marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:3, height:14, background:'#D97706', borderRadius:2, display:'inline-block' }}></span>
             {lang==='fr' ? '👨‍👩‍👧 Note pour les parents' : '👨‍👩‍👧 Note for parents'}
           </div>
-          <div style={{ fontSize:12, color:'#78350F', lineHeight:1.7 }}>
+          <div style={{ fontSize:12, color:'#78350F', lineHeight:1.8 }}>
             {lang==='fr'
-              ? `${eleve.prenom} présente un profil ${profilDom.nom} dominant (${scores[classement[0]]}%). Les recommandations d'établissements et de filières spécifiques seront communiquées par l'équipe Atlas Tawjih. N'hésitez pas à nous contacter.`
-              : `${eleve.prenom} shows a dominant ${profilDom.nom} profile (${scores[classement[0]]}%). Recommendations for specific institutions and fields will be provided by the Atlas Tawjih team. Feel free to contact us.`}
+              ? `${eleve.prenom} présente un profil ${profilDom.nom} dominant (${scores[classement[0]]}%). Ce rapport est un point de départ, pas un verdict définitif. Les recommandations d'établissements seront communiquées par l'équipe Atlas Tawjih selon sa situation et ses préférences.`
+              : `${eleve.prenom} has a dominant ${profilDom.nom} profile (${scores[classement[0]]}%). This report is a starting point, not a final verdict. Institution recommendations will be provided by the Atlas Tawjih team based on their situation and preferences.`}
           </div>
           <div style={{ marginTop:10, fontSize:12, color:'#7C3AED', fontWeight:600 }}>
             📧 atlastawjih.maroc@gmail.com
           </div>
-        </div>
-
-        {/* FEEDBACK + PDF */}
-        {/* ── SECTION PDF ── */}
-        <div style={{ marginBottom:24 }}>
-          {/* Étape 1 : choisir la langue du PDF */}
-          {!showFeedback && !feedbackDone && (
-            <div style={{ background:'linear-gradient(135deg,#7C3AED,#5B21B6)', borderRadius:14, padding:'24px', textAlign:'center', boxShadow:'0 8px 24px rgba(124,58,237,0.3)', marginBottom:12 }}>
-              <div style={{ fontSize:22, marginBottom:8 }}>📄</div>
-              <div style={{ fontSize:15, fontWeight:700, color:'#fff', marginBottom:6 }}>
-                {lang==='fr' ? 'Télécharge ton rapport PDF gratuit' : 'Download your free PDF report'}
-              </div>
-              <div style={{ fontSize:12, color:'#DDD6FE', marginBottom:16 }}>
-                {lang==='fr' ? '4 pages · Plan A, B, C · Environnement · Conseils · Note parents' : '4 pages · Plan A, B, C · Environment · Tips · Parent note'}
-              </div>
-
-              {/* Sélecteur langue PDF */}
-              <div style={{ marginBottom:16 }}>
-                <div style={{ fontSize:12, color:'#C4B5FD', marginBottom:8 }}>
-                  {lang==='fr' ? '1️⃣ Choisis la langue de ton rapport :' : '1️⃣ Choose your report language:'}
-                </div>
-                <div style={{ display:'flex', justifyContent:'center', gap:8 }}>
-                  {['fr','en'].map(l => (
-                    <button key={l} onClick={() => setPdfLang(l)} style={{ padding:'8px 20px', borderRadius:8, border:`2px solid ${pdfLang===l?'#fff':'rgba(255,255,255,0.3)'}`, background:pdfLang===l?'#fff':'transparent', color:pdfLang===l?'#7C3AED':'#fff', fontSize:13, fontWeight:700, cursor:'pointer', transition:'all 0.15s' }}>
-                      {l==='fr'?'🇫🇷 Français':'🇬🇧 English'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bouton donner avis */}
-              <div style={{ fontSize:12, color:'#C4B5FD', marginBottom:10 }}>
-                {lang==='fr' ? '2️⃣ Donne ton avis (obligatoire) puis ton PDF se télécharge automatiquement' : '2️⃣ Give your feedback (required) then your PDF downloads automatically'}
-              </div>
-              <button onClick={() => setShowFeedback(true)} style={{ background:'#fff', color:'#7C3AED', border:'none', padding:'12px 28px', borderRadius:10, fontSize:14, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(0,0,0,0.15)' }}>
-                {lang==='fr' ? '💬 Donner mon avis → télécharger le PDF' : '💬 Give feedback → download PDF'}
-              </button>
-            </div>
-          )}
-
-          {/* Étape 2 : formulaire feedback */}
-          {showFeedback && !feedbackDone && (
-            <Feedback
-              lang={lang}
-              profilRiasec={code3}
-              onValide={() => {
-                setFeedbackDone(true)
-                setTimeout(() => handlePDF(), 1800)
-              }}
-            />
-          )}
-
-          {/* Étape 3 : PDF téléchargé — option de retélécharger */}
-          {feedbackDone && (
-            <div style={{ background:'linear-gradient(135deg,#7C3AED,#5B21B6)', borderRadius:14, padding:'24px', textAlign:'center', boxShadow:'0 8px 24px rgba(124,58,237,0.3)' }}>
-              <div style={{ fontSize:22, marginBottom:8 }}>✅</div>
-              <div style={{ fontSize:15, fontWeight:700, color:'#fff', marginBottom:6 }}>
-                {lang==='fr' ? 'Merci ! Ton PDF est prêt.' : 'Thank you! Your PDF is ready.'}
-              </div>
-              <div style={{ fontSize:12, color:'#DDD6FE', marginBottom:16 }}>
-                {lang==='fr' ? "Si le téléchargement ne s’est pas lancé, clique ci-dessous :" : 'If the download did not start, click below:'}
-              </div>
-              {/* Changer la langue et retélécharger */}
-              <div style={{ display:'flex', justifyContent:'center', gap:8, marginBottom:12 }}>
-                {['fr','en'].map(l => (
-                  <button key={l} onClick={() => setPdfLang(l)} style={{ padding:'6px 14px', borderRadius:6, border:`2px solid ${pdfLang===l?'#fff':'rgba(255,255,255,0.3)'}`, background:pdfLang===l?'#fff':'transparent', color:pdfLang===l?'#7C3AED':'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>
-                    {l==='fr'?'🇫🇷 FR':'🇬🇧 EN'}
-                  </button>
-                ))}
-              </div>
-              <button onClick={handlePDF} disabled={pdfLoading} style={{ background:pdfLoading?'rgba(255,255,255,0.3)':'#fff', color:pdfLoading?'#DDD6FE':'#7C3AED', border:'none', padding:'11px 24px', borderRadius:9, fontSize:13, fontWeight:700, cursor:pdfLoading?'wait':'pointer' }}>
-                {pdfLoading ? (lang==='fr'?'⏳ Génération...':'⏳ Generating...') : (lang==='fr'?'📄 Retélécharger':'📄 Re-download')}
-              </button>
-            </div>
-          )}
         </div>
 
         {/* REFAIRE */}
