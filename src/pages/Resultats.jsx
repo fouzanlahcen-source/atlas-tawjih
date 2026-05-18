@@ -870,8 +870,8 @@ function getClassement(scores) {
 // ══════════════════════════════════════════════════════════
 async function genererPDF(eleve, scores, classement, lang) {
   const { jsPDF } = await import('jspdf')
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const W=210, H=297, ML=14, MR=14, TW=W-ML-MR
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' })
+  const W=210, H=297, ML=16, MR=16, TW=W-ML-MR
 
   const profA=PROFILS[classement[0]][lang]
   const profB=PROFILS[classement[1]][lang]
@@ -881,507 +881,475 @@ async function genererPDF(eleve, scores, classement, lang) {
   const RGB={R:[239,68,68],I:[59,130,246],A:[139,92,246],S:[16,185,129],E:[245,158,11],C:[6,182,212]}
   const cA=RGB[classement[0]], cB=RGB[classement[1]], cC=RGB[classement[2]]
   const DRK=[30,41,59], GRY=[71,85,105], LGT=[148,163,184], WHT=[255,255,255]
-  const RED=[239,68,68], AMB=[217,119,6]
-  const BORDER=[226,232,240], LIGHT=[248,250,252]
+  const RED=[220,38,38], REDBG=[254,242,242], BORDER=[226,232,240], LIGHT=[248,250,252]
+  const AMB=[217,119,6], AMBBG=[255,251,235]
 
   const clp=v=>Math.min(255,Math.max(0,Math.round(v)))
   const mix=(c,w)=>c.map(v=>clp(v*(1-w)+255*w))
-  const dark=(c,w)=>c.map(v=>clp(v*(1-w)))
+  const drk=(c,w)=>c.map(v=>clp(v*(1-w)))
 
-  const sf=(bold,size,col)=>{
-    doc.setFont('helvetica',bold?'bold':'normal')
-    doc.setFontSize(size); doc.setTextColor(col[0],col[1],col[2])
-  }
+  const sf=(bold,size,col)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(col[0],col[1],col[2])}
   const fl=col=>doc.setFillColor(col[0],col[1],col[2])
   const dr=col=>doc.setDrawColor(col[0],col[1],col[2])
   const bx=(x,y,w,h,r,col)=>{if(col)fl(col);doc.roundedRect(x,y,Math.max(0.5,w),Math.max(0.5,h),r||0,r||0,'F')}
   const fr=(x,y,w,h,col)=>{fl(col);doc.rect(x,y,Math.max(0.5,w),Math.max(0.5,h),'F')}
+  const brd=(x,y,w,h,r,col,lw)=>{dr(col||BORDER);doc.setLineWidth(lw||0.4);doc.roundedRect(x,y,w,h,r||3,r||3,'S')}
   const cl=s=>String(s||'').replace(/[^\x00-\xFF \n]/g,'').trim()
   const tx=(s,x,y,al)=>{const c=cl(s);if(c)doc.text(c,x,y,al?{align:al}:{})}
-  const tw=(s,x,y,mw,lh)=>{const c=cl(s);if(!c)return y;const ls=doc.splitTextToSize(c,mw);doc.text(ls,x,y);return y+ls.length*(lh||5.5)}
 
   let pg=1, y=0
 
-  // ── Top bar (every page) ────────────────────────────────
+  // ── Top bar ─────────────────────────────────────────────
   const topBar=()=>{
     fr(0,0,W,14,DRK)
-    // AT pill
     bx(ML,2,12,10,2,cA)
     sf(true,7,WHT); tx('AT',ML+6,9,'center')
-    sf(true,10.5,WHT); tx('ATLAS TAWJIH',ML+16,9.5)
-    sf(false,7.5,LGT)
-    tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}  |  Code : ${code3}`,W-MR,9.5,'right')
+    sf(true,10,WHT); tx('ATLAS TAWJIH',ML+16,9.5)
+    sf(false,7.5,LGT); tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}  |  Code : ${code3}`,W-MR,9.5,'right')
   }
-
-  // ── Footer (every page) ─────────────────────────────────
   const ftr=()=>{
     fr(0,H-11,W,11,DRK)
-    sf(false,7.5,LGT)
-    tx('Atlas Tawjih  |  atlastawjih.maroc@gmail.com',ML,H-4.5)
-    // Page number with circle
-    const pgTx=`${pg}`
-    const px=W-MR-8
-    bx(px-4,H-10,8,8,4,mix(cA,0.3))
-    sf(true,8,WHT); tx(pgTx,px,H-4.5,'center')
+    sf(false,7.5,LGT); tx('Atlas Tawjih  |  atlastawjih.maroc@gmail.com',ML,H-4.5)
+    sf(true,8.5,WHT); tx(`${pg}`,W-MR,H-4.5,'right')
   }
-
   const newPg=()=>{doc.addPage();bx(0,0,W,H,0,WHT);topBar();pg++;y=22}
   const chk=n=>{if(y+n>H-13)newPg()}
 
-  // ── Section header ──────────────────────────────────────
-  const secHdr=(label,col,icon)=>{
-    chk(16)
-    bx(ML,y,TW,12,3,col)
-    fr(ML,y,4,12,dark(col,0.2))
-    sf(true,12,WHT); tx((icon?icon+' ':'')+label,ML+8,y+8.5)
-    y+=16
+  // ── Helpers identiques à la page web ───────────────────
+
+  // Titre de section avec barre latérale gauche colorée
+  const secTitle=(label,col)=>{
+    chk(14); fr(ML,y,3,11,col)
+    sf(true,12,col); tx(label,ML+7,y+8.5); y+=15
   }
 
-  // ── Sub header with left bar ────────────────────────────
-  const subHdr=(label,col)=>{
-    chk(12); fr(ML,y,3,11,col)
-    sf(true,10.5,col); tx(label,ML+7,y+7.8); y+=14
-  }
-
-  // ── Colored card (left border, light tinted bg) ─────────
-  const card=(text,col)=>{
-    const c=cl(text), ls=doc.splitTextToSize(c,TW-10), h=ls.length*5.8+12
-    chk(h+5)
-    bx(ML,y,TW,h,3,mix(col,0.93))
-    fr(ML,y,3,h,col)
-    sf(false,10,DRK); doc.text(ls,ML+8,y+8)
-    y+=h+6
-  }
-
-  // ── Gradient colored card (for description) ─────────────
-  const gradCard=(sublabel,text,col)=>{
-    const c=cl(text), ls=doc.splitTextToSize(c,TW-8), h=ls.length*6.2+18
+  // Bloc gradient coloré (comme "Profil en détail" sur la page)
+  const gradBloc=(sublabel,text,col)=>{
+    const ls=doc.splitTextToSize(cl(text),TW-10), h=ls.length*6.2+16
     chk(h+4)
     bx(ML,y,TW,h,4,col)
-    fr(ML,y,TW,6,dark(col,0.1)) // top darker strip
-    sf(true,7.5,mix(col,0.3)); tx(sublabel,ML+6,y+5)
+    sf(true,7.5,mix(col,0.3)); tx(sublabel,ML+6,y+6)
     sf(false,10.5,WHT); doc.text(ls,ML+6,y+12)
     y+=h+6
   }
 
-  // ── Pills ───────────────────────────────────────────────
+  // Bloc carte blanc + barre gauche (comme les cards de la page)
+  const whiteCard=(text,col)=>{
+    const ls=doc.splitTextToSize(cl(text),TW-12), h=ls.length*6+14
+    chk(h+4)
+    bx(ML,y,TW,h,3,WHT); brd(ML,y,TW,h,3,BORDER,0.4)
+    fr(ML,y,3,h,col)
+    sf(false,10,GRY); doc.text(ls,ML+8,y+9)
+    y+=h+5
+  }
+
+  // Pills (pastilles rondes comme la page)
   const pills=(items,col)=>{
-    chk(10); let sx=ML, ry=y
+    let sx=ML, ry=y
     items.forEach(item=>{
       const s=cl(item); if(!s)return
-      const sw=doc.getTextWidth(s)+10
+      const sw=doc.getTextWidth(s)+12
       if(sx+sw>W-MR){sx=ML;ry+=9;chk(10)}
-      bx(sx,ry,sw,7.5,3,mix(col,0.88))
-      dr(mix(col,0.5)); doc.setLineWidth(0.35)
-      doc.roundedRect(sx,ry,sw,7.5,3,3,'FD')
-      sf(false,8.5,dark(col,0.1)); tx(s,sx+5,ry+5.3)
+      bx(sx,ry,sw,7.5,3,WHT); brd(sx,ry,sw,7.5,3,BORDER,0.4)
+      sf(false,8.5,cA); tx(s,sx+6,ry+5.3)
       sx+=sw+4
     })
-    y=ry+11
+    y=ry+12
   }
 
-  // ── Table row (white bg, left bar, separator line) ──────
-  const trow=(c1,c2,col,i)=>{
-    const ls=doc.splitTextToSize(cl(c2),TW*0.60-4), h=Math.max(11,ls.length*5.3+9)
-    chk(h+2)
-    bx(ML,y,TW,h,0,WHT); fr(ML,y,3,h,col)
-    sf(true,9.5,col); tx(cl(c1),ML+6,y+h/2+1.5)
-    dr(BORDER); doc.setLineWidth(0.25)
-    doc.line(ML+TW*0.37,y+2,ML+TW*0.37,y+h-2)
-    sf(false,9,GRY); doc.text(ls,ML+TW*0.38,y+7)
+  // Ligne de tableau points forts (barre gauche + 2 colonnes)
+  const fortRow=(titre,desc,col,i)=>{
+    const ls=doc.splitTextToSize(cl(desc),TW*0.62-4), h=Math.max(11,ls.length*5.5+9)
+    chk(h+1)
+    bx(ML,y,TW,h,0,i%2===0?LIGHT:WHT)
+    fr(ML,y,3,h,col)
+    sf(true,9.5,col); tx(cl(titre),ML+7,y+h/2+1.5)
+    dr(BORDER); doc.setLineWidth(0.3); doc.line(ML+TW*0.36,y+2,ML+TW*0.36,y+h-2)
+    sf(false,9.5,GRY); doc.text(ls,ML+TW*0.37,y+7)
     dr(BORDER); doc.setLineWidth(0.3); doc.line(ML,y+h,W-MR,y+h)
-    y+=h+2
+    y+=h+1
   }
 
-  // ── Metiers block ───────────────────────────────────────
+  // Badge catégorie métier (coloré plein, texte blanc)
+  // + items en grille 2 colonnes (fond blanc, barre gauche, titre coloré, desc grise)
   const metBlock=(metiers,col)=>{
     metiers.forEach(({cat,liste})=>{
       chk(14)
-      bx(ML,y,TW,10,3,col); fr(ML,y,4,10,dark(col,0.2))
-      sf(true,10,WHT); tx(cl(cat),ML+8,y+7); y+=13
+      bx(ML,y,doc.getTextWidth(cl(cat))+14,9,3,col)
+      sf(true,9.5,WHT); tx(cl(cat),ML+7,y+6.5)
+      y+=12
       for(let i=0;i<liste.length;i+=2){
         const L=liste[i], R=liste[i+1]
         const lD=doc.splitTextToSize(cl(L[1]),TW/2-14)
         const rD=R?doc.splitTextToSize(cl(R[1]),TW/2-14):[]
-        const h=Math.max(17,Math.max(lD.length,rD.length)*5.3+14)
+        const h=Math.max(18,Math.max(lD.length,rD.length)*5.5+14)
         chk(h+3)
-        // Left card
-        bx(ML,y,TW/2-2,h,3,WHT)
-        dr(BORDER); doc.setLineWidth(0.4); doc.roundedRect(ML,y,TW/2-2,h,3,3,'S')
-        fr(ML,y,3,h,col)
-        sf(true,10,col); tx('v  '+cl(L[0]),ML+6,y+9)
-        sf(false,9,GRY); doc.text(lD,ML+6,y+15)
-        // Right card
+        // Carte gauche
+        bx(ML,y,TW/2-2,h,3,WHT); brd(ML,y,TW/2-2,h,3,BORDER,0.4); fr(ML,y,3,h,col)
+        sf(true,10,col); tx('v  '+cl(L[0]),ML+7,y+9)
+        sf(false,8.5,GRY); doc.text(lD,ML+7,y+15)
+        // Carte droite
         if(R){
           const rx=ML+TW/2+2
-          bx(rx,y,TW/2-2,h,3,WHT)
-          dr(BORDER); doc.setLineWidth(0.4); doc.roundedRect(rx,y,TW/2-2,h,3,3,'S')
-          fr(rx,y,3,h,col)
-          sf(true,10,col); tx('v  '+cl(R[0]),rx+6,y+9)
-          sf(false,9,GRY); doc.text(rD,rx+6,y+15)
+          bx(rx,y,TW/2-2,h,3,WHT); brd(rx,y,TW/2-2,h,3,BORDER,0.4); fr(rx,y,3,h,col)
+          sf(true,10,col); tx('v  '+cl(R[0]),rx+7,y+9)
+          sf(false,8.5,GRY); doc.text(rD,rx+7,y+15)
         }
         y+=h+3
       }
-      y+=5
+      y+=4
     })
   }
 
-  // ── Eviter block ────────────────────────────────────────
+  // Bloc rouge "À éviter" (comme la page web)
   const eviterBlock=(items)=>{
     items.forEach(([titre,desc])=>{
-      const ls=doc.splitTextToSize(cl(desc),TW-14), h=ls.length*5.3+16
+      const ls=doc.splitTextToSize(cl(desc),TW-14), h=ls.length*5.5+16
       chk(h+4)
-      bx(ML,y,TW,h,3,[254,242,242]); fr(ML,y,3,h,RED)
+      bx(ML,y,TW,h,3,REDBG); brd(ML,y,TW,h,3,[254,202,202],0.4); fr(ML,y,3,h,RED)
       sf(true,10.5,RED); tx('x  '+cl(titre),ML+7,y+9)
       sf(false,9,[127,29,29]); doc.text(ls,ML+7,y+15)
       y+=h+5
     })
   }
 
-  // ── Info row ────────────────────────────────────────────
-  const infoRow=(k,v,col,even)=>{
-    const h=10; chk(h+1)
-    bx(ML,y,TW,h,0,even?LIGHT:WHT); fr(ML,y,3,h,col)
-    sf(true,9.5,DRK); tx(cl(String(k)),ML+6,y+7)
-    sf(false,9.5,GRY)
-    doc.text(doc.splitTextToSize(cl(String(v||'')),TW-52),ML+52,y+7)
-    dr(BORDER); doc.setLineWidth(0.3); doc.line(ML,y+h,W-MR,y+h)
+  // Ligne tableau parents (fond blanc, barre gauche)
+  const parentRow=(c1,c2,col)=>{
+    const ls=doc.splitTextToSize(cl(c2),TW*0.60-4), h=Math.max(11,ls.length*5.3+9)
+    chk(h+1)
+    bx(ML,y,TW,h,0,WHT); brd(ML,y,TW,h,0,BORDER,0.3); fr(ML,y,3,h,col)
+    sf(true,9.5,col); tx(cl(c1),ML+7,y+h/2+1.5)
+    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML+TW*0.37,y+2,ML+TW*0.37,y+h-2)
+    sf(false,9,GRY); doc.text(ls,ML+TW*0.38,y+7)
     y+=h+1
   }
 
-  // ────────────────────────────────────────────────────────
-  // PAGE 1 — COUVERTURE PREMIUM
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
+  // PAGE 1 — COUVERTURE
+  // ════════════════════════════════════════════════════════
   bx(0,0,W,H,0,WHT)
-
-  // Full-bleed colored top section
-  bx(0,0,W,90,0,DRK)
-  // Decorative circles
-  bx(150,−20,80,80,40,mix(cA,0.15))
-  bx(160,30,50,50,25,mix(cA,0.1))
-  bx(-10,50,60,60,30,mix(cA,0.08))
-
-  // Logo row
-  bx(ML,14,14,14,3,cA)
-  sf(true,8.5,WHT); tx('AT',ML+7,22.5,'center')
-  sf(true,13,WHT); tx('ATLAS TAWJIH',ML+19,22)
-  sf(false,8,LGT); tx(lang==='fr'?'Plateforme d\'Orientation RIASEC':'RIASEC Orientation Platform',ML+19,28)
-  sf(false,8,LGT); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),W-MR,22,'right')
-
-  // Student name large
-  sf(true,22,WHT)
-  tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}`,ML,50)
-  sf(false,10,LGT); tx(`${cl(eleve.filiere)}   |   ${cl(eleve.ville)}`,ML,59)
-
-  // Separator line
-  fr(ML,65,TW,0.5,mix(cA,0.4))
-
-  // Code Holland badge row
-  sf(false,9,LGT); tx(lang==='fr'?'Code Holland :':'Holland Code:',ML,74)
+  // Header sombre
+  fr(0,0,W,70,DRK)
+  // Cercles déco
+  bx(150,-15,70,70,35,mix(cA,0.2)); bx(170,25,40,40,20,mix(cA,0.15)); bx(-5,40,55,55,27,mix(cA,0.1))
+  // Logo
+  bx(ML,12,14,14,3,cA); sf(true,9,WHT); tx('AT',ML+7,21,'center')
+  sf(true,13,WHT); tx('ATLAS TAWJIH',ML+20,21)
+  sf(false,8,LGT)
+  tx(lang==='fr'?"Plateforme d'Orientation RIASEC":'RIASEC Orientation Platform',ML+20,27)
+  sf(false,8,LGT); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),W-MR,21,'right')
+  // Nom étudiant
+  sf(true,24,WHT); tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}`,ML,47)
+  sf(false,10,LGT); tx(`${cl(eleve.filiere)}   |   ${cl(eleve.ville)}`,ML,56)
+  // Ligne
+  fr(ML,63,TW,0.5,mix(cA,0.5))
+  // Badges code Holland
+  sf(false,8.5,LGT); tx(lang==='fr'?'Code Holland :':'Holland Code:',ML,73)
   ;[classement[0],classement[1],classement[2]].forEach((d,i)=>{
-    const cx=ML+50+i*30
-    bx(cx,68,24,10,2,i===0?cA:mix(cA,0.3))
-    sf(true,i===0?10:8.5,WHT); tx(d,cx+12,75.5,'center')
+    bx(ML+52+i*28,67,22,10,2,i===0?cA:mix(cA,0.25))
+    sf(true,i===0?10:8.5,WHT); tx(d,ML+63+i*28,74.5,'center')
   })
 
-  // White content area
-  y=100
+  y=84
+  // Carte profil dominant
+  bx(ML,y,TW,38,4,mix(cA,0.08)); brd(ML,y,TW,38,4,mix(cA,0.3),0.6); fr(ML,y,4,38,cA)
+  bx(ML+8,y+7,24,24,12,cA); sf(true,16,WHT); tx(classement[0],ML+20,y+22,'center')
+  sf(true,17,DRK); tx(cl(profA.nom),ML+38,y+16)
+  sf(false,9,GRY); tx(lang==='fr'?'Profil dominant  |  Code Holland :':'Dominant profile  |  Holland Code:',ML+38,y+24)
+  sf(true,12,cA); tx(code3,ML+38,y+32)
+  bx(W-MR-28,y+8,24,22,3,cA)
+  sf(true,16,WHT); tx(`${scores[classement[0]]}%`,W-MR-16,y+21,'center')
+  sf(false,7.5,WHT); tx('score',W-MR-16,y+28,'center')
+  y+=44
 
-  // Dominant profile big card
-  bx(ML,y,TW,52,4,mix(cA,0.07))
-  bx(ML,y,TW,52,4,[0,0,0]) // fake border
-  dr(mix(cA,0.3)); doc.setLineWidth(0.6)
-  doc.roundedRect(ML,y,TW,52,4,4,'S')
-  fr(ML,y,4,52,cA)
-
-  // Big letter circle
-  bx(ML+10,y+8,36,36,18,cA)
-  sf(true,22,WHT); tx(classement[0],ML+28,y+30,'center')
-
-  // Profile info
-  sf(true,18,DRK); tx(cl(profA.nom),ML+54,y+20)
-  sf(false,9,GRY); tx(lang==='fr'?'Profil dominant | Code Holland :':'Dominant profile | Holland Code:',ML+54,y+28)
-  sf(true,13,cA); tx(code3,ML+54,y+36)
-
-  // Score gauge (visual)
-  const sc0=scores[classement[0]]
-  const gaugeX=W-MR-40, gaugeY=y+10, gaugeW=35, gaugeH=32
-  bx(gaugeX,gaugeY,gaugeW,gaugeH,3,WHT)
-  dr(mix(cA,0.3)); doc.setLineWidth(0.5)
-  doc.roundedRect(gaugeX,gaugeY,gaugeW,gaugeH,3,3,'S')
-  sf(true,20,cA); tx(`${sc0}%`,gaugeX+gaugeW/2,gaugeY+18,'center')
-  sf(false,7.5,GRY); tx('score',gaugeX+gaugeW/2,gaugeY+26,'center')
-  y+=60
-
-  // 6 mini score bars
-  sf(true,9.5,DRK); tx(lang==='fr'?'Tes scores RIASEC :':'Your RIASEC scores:',ML,y)
-  y+=7
-  const allDims=['R','I','A','S','E','C']
-  allDims.forEach((d,i)=>{
-    const sc=scores[d], cc=RGB[d], row=Math.floor(i/3), col2=i%3
-    const bx2=ML+col2*(TW/3), by2=y+row*11
-    sf(true,8.5,cc); tx(d,bx2,by2+4)
-    sf(false,8,GRY); tx(cl(PROFILS[d][lang].nom).slice(0,10),bx2+7,by2+4)
-    bx(bx2+42,by2,TW/3-46,5,2,BORDER)
-    bx(bx2+42,by2,Math.max(1,(TW/3-46)*sc/100),5,2,cc)
-    sf(true,8,cc); tx(`${sc}%`,bx2+TW/3-2,by2+4,'right')
+  // Barres scores (2 colonnes x 3 lignes)
+  fr(ML,y,3,11,DRK); sf(true,10.5,DRK); tx(lang==='fr'?'Scores RIASEC':'RIASEC Scores',ML+7,y+8); y+=14
+  const allD=['R','I','A','S','E','C']
+  allD.forEach((d,i)=>{
+    const sc=scores[d], cc=RGB[d], col2=i%2, row=Math.floor(i/2)
+    const bx2=ML+col2*(TW/2+1), by2=y+row*11
+    sf(true,9,cc); tx(d,bx2,by2+4.5); sf(false,8.5,GRY); tx(cl(PROFILS[d][lang].nom).slice(0,12),bx2+8,by2+4.5)
+    bx(bx2+48,by2,TW/2-52,5.5,2,BORDER); bx(bx2+48,by2,Math.max(1,(TW/2-52)*sc/100),5.5,2,cc)
+    sf(true,8.5,cc); tx(`${sc}%`,bx2+TW/2-2,by2+4.5,'right')
   })
-  y+=26
+  y+=36
 
-  // Description gradient card
-  gradCard(lang==='fr'?'PROFIL EN DETAIL':'PROFILE IN DETAIL',profA.desc,cA)
+  // Description profil — gradient coloré
+  gradBloc(lang==='fr'?'PROFIL EN DETAIL':'PROFILE IN DETAIL', profA.desc, cA)
 
-  // Bons en — pills in white card
-  if(profA.bonsEn && profA.bonsEn.length>0){
-    chk(40)
-    const pillsY=y
-    fr(ML,y,3,11,cA)
-    sf(true,10.5,cA); tx(lang==='fr'?'Tu seras tres bon dans':'You will excel in',ML+7,y+7.8); y+=14
-    pills(profA.bonsEn,cA)
-    // border around whole section
-    dr(BORDER); doc.setLineWidth(0.4)
-    doc.roundedRect(ML,pillsY-2,TW,y-pillsY+4,3,3,'S')
-  }
+  // Tu seras bon dans — cadre blanc avec barre gauche + pills
+  chk(36)
+  const pillStart=y
+  fr(ML,y,3,11,cA); sf(true,10.5,cA); tx(lang==='fr'?'Tu seras tres bon dans':'You will excel in',ML+7,y+8); y+=14
+  pills(profA.bonsEn||[],cA)
+  brd(ML,pillStart-2,TW,y-pillStart+4,3,BORDER,0.4)
 
   ftr()
 
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   // PAGE 2 — POINTS FORTS
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   newPg()
-  secHdr(lang==='fr'?'Points forts':'Key strengths',cA,'★')
+  // Cadre blanc englobant avec titre
+  const fortsStart=y
+  fr(ML,y,3,11,cA); sf(true,10.5,DRK); tx(lang==='fr'?'Points forts':'Key strengths',ML+7,y+8); y+=14
 
-  // Column headers with colored bg
-  chk(11)
-  bx(ML,y,TW,10,2,cA)
-  sf(true,10,WHT)
-  tx(lang==='fr'?'Point fort':'Strength',ML+6,y+7)
-  tx(lang==='fr'?'Ce que ca signifie pour toi':'What it means for you',ML+TW*0.38,y+7)
+  // En-tête colonnes
+  chk(11); bx(ML,y,TW,10,2,LIGHT); brd(ML,y,TW,10,2,BORDER,0.4); fr(ML,y,3,10,cA)
+  sf(true,9.5,cA); tx(lang==='fr'?'Point fort':'Strength',ML+7,y+7)
+  dr(BORDER); doc.setLineWidth(0.3); doc.line(ML+TW*0.36,y+2,ML+TW*0.36,y+8)
+  sf(true,9.5,GRY); tx(lang==='fr'?'Ce que ca signifie pour toi':'What it means for you',ML+TW*0.37,y+7)
   y+=12
 
-  profA.forts.forEach(([fort,desc],i)=>trow(fort,desc,cA,i))
+  profA.forts.forEach(([fort,desc],i)=>fortRow(fort,desc,cA,i))
+  // Cadre global
+  brd(ML,fortsStart-2,TW,y-fortsStart+4,3,BORDER,0.4)
   y+=8; ftr()
 
-  // ────────────────────────────────────────────────────────
-  // PAGE 3+ — PLAN A
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
+  // PLAN A
+  // ════════════════════════════════════════════════════════
   newPg()
-  // Premium plan header
-  bx(ML,y,TW,26,4,cA)
-  fr(ML,y,5,26,dark(cA,0.25))
-  // Plan letter badge
-  bx(ML+8,y+4,18,18,9,WHT)
-  sf(true,13,cA); tx('A',ML+17,y+15,'center')
-  sf(true,8.5,mix(cA,0.35))
-  tx(lang==='fr'?'PLAN A   ·   PROFIL DOMINANT   ·   PRIORITE':'PLAN A   ·   DOMINANT PROFILE   ·   PRIORITY',ML+32,y+9)
-  sf(true,16,WHT); tx(`${classement[0]}  —  ${cl(profA.nom)}  (${scores[classement[0]]}%)`,ML+32,y+21)
-  // Score circle top right
-  bx(W-MR-20,y+4,16,16,8,dark(cA,0.2))
-  sf(true,9,WHT); tx(`${scores[classement[0]]}%`,W-MR-12,y+14,'center')
+  // Badge plan (comme la page — fond coloré, icone lettre, texte)
+  bx(ML,y,120,26,4,cA); fr(ML,y,5,26,drk(cA,0.2))
+  bx(ML+8,y+5,16,16,8,WHT); sf(true,11,cA); tx('A',ML+16,y+15.5,'center')
+  sf(true,8,mix(cA,0.3)); tx(lang==='fr'?'PLAN A - PRIORITE':'PLAN A - PRIORITY',ML+30,y+10)
+  sf(true,14,WHT); tx(`${classement[0]} - ${cl(profA.nom)} (${scores[classement[0]]}%)`,ML+30,y+21)
   y+=32
 
-  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco',cA)
+  // Domaines — cadre blanc + titre + pills
+  chk(40); const domY=y
+  fr(ML,y,3,11,cA); sf(true,10.5,cA); tx(lang==='fr'?"Domaines d'etudes":'Fields of study',ML+7,y+8); y+=14
   pills(profA.domaines,cA)
-  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers',cA)
+  brd(ML,domY-2,TW,y-domY+4,3,BORDER,0.4); y+=3
+
+  // Métiers — titre + cards
+  fr(ML,y,3,11,cA); sf(true,10.5,cA); tx(lang==='fr'?'Metiers recommandes':'Recommended careers',ML+7,y+8); y+=14
   metBlock(profA.metiers,cA)
   ftr()
 
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   // PLAN B
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   newPg()
-  bx(ML,y,TW,26,4,cB)
-  fr(ML,y,5,26,dark(cB,0.25))
-  bx(ML+8,y+4,18,18,9,WHT); sf(true,13,cB); tx('B',ML+17,y+15,'center')
-  sf(true,8.5,mix(cB,0.35))
-  tx(lang==='fr'?'PLAN B   ·   PROFIL SECONDAIRE   ·   ALTERNATIVE':'PLAN B   ·   SECONDARY PROFILE   ·   ALTERNATIVE',ML+32,y+9)
-  sf(true,16,WHT); tx(`${classement[1]}  —  ${cl(profB.nom)}  (${scores[classement[1]]}%)`,ML+32,y+21)
-  bx(W-MR-20,y+4,16,16,8,dark(cB,0.2)); sf(true,9,WHT); tx(`${scores[classement[1]]}%`,W-MR-12,y+14,'center')
+  bx(ML,y,120,26,4,cB); fr(ML,y,5,26,drk(cB,0.2))
+  bx(ML+8,y+5,16,16,8,WHT); sf(true,11,cB); tx('B',ML+16,y+15.5,'center')
+  sf(true,8,mix(cB,0.3)); tx(lang==='fr'?'PLAN B - ALTERNATIVE':'PLAN B - ALTERNATIVE',ML+30,y+10)
+  sf(true,14,WHT); tx(`${classement[1]} - ${cl(profB.nom)} (${scores[classement[1]]}%)`,ML+30,y+21)
   y+=32
-  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco',cB)
-  pills(profB.domaines,cB)
-  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers',cB)
-  metBlock(profB.metiers,cB)
-  ftr()
+  chk(40); const domYb=y
+  fr(ML,y,3,11,cB); sf(true,10.5,cB); tx(lang==='fr'?"Domaines d'etudes":'Fields of study',ML+7,y+8); y+=14
+  pills(profB.domaines,cB); brd(ML,domYb-2,TW,y-domYb+4,3,BORDER,0.4); y+=3
+  fr(ML,y,3,11,cB); sf(true,10.5,cB); tx(lang==='fr'?'Metiers recommandes':'Recommended careers',ML+7,y+8); y+=14
+  metBlock(profB.metiers,cB); ftr()
 
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   // PLAN C
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   newPg()
-  bx(ML,y,TW,26,4,cC)
-  fr(ML,y,5,26,dark(cC,0.25))
-  bx(ML+8,y+4,18,18,9,WHT); sf(true,13,cC); tx('C',ML+17,y+15,'center')
-  sf(true,8.5,mix(cC,0.35))
-  tx(lang==='fr'?'PLAN C   ·   PROFIL TERTIAIRE   ·   OPTION DE REPLI':'PLAN C   ·   TERTIARY PROFILE   ·   BACKUP OPTION',ML+32,y+9)
-  sf(true,16,WHT); tx(`${classement[2]}  —  ${cl(profC.nom)}  (${scores[classement[2]]}%)`,ML+32,y+21)
-  bx(W-MR-20,y+4,16,16,8,dark(cC,0.2)); sf(true,9,WHT); tx(`${scores[classement[2]]}%`,W-MR-12,y+14,'center')
+  bx(ML,y,120,26,4,cC); fr(ML,y,5,26,drk(cC,0.2))
+  bx(ML+8,y+5,16,16,8,WHT); sf(true,11,cC); tx('C',ML+16,y+15.5,'center')
+  sf(true,8,mix(cC,0.3)); tx(lang==='fr'?'PLAN C - OPTION DE REPLI':'PLAN C - BACKUP',ML+30,y+10)
+  sf(true,14,WHT); tx(`${classement[2]} - ${cl(profC.nom)} (${scores[classement[2]]}%)`,ML+30,y+21)
   y+=32
-  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco',cC)
-  pills(profC.domaines,cC)
-  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers',cC)
-  metBlock(profC.metiers,cC)
-  ftr()
+  chk(40); const domYc=y
+  fr(ML,y,3,11,cC); sf(true,10.5,cC); tx(lang==='fr'?"Domaines d'etudes":'Fields of study',ML+7,y+8); y+=14
+  pills(profC.domaines,cC); brd(ML,domYc-2,TW,y-domYc+4,3,BORDER,0.4); y+=3
+  fr(ML,y,3,11,cC); sf(true,10.5,cC); tx(lang==='fr'?'Metiers recommandes':'Recommended careers',ML+7,y+8); y+=14
+  metBlock(profC.metiers,cC); ftr()
 
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   // PAGE — ENVIRONNEMENT
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   newPg()
-  secHdr(lang==='fr'?'Environnement et Conseils':'Environment and Advice',cA,'◆')
-  subHdr(lang==='fr'?'Environnement de travail ideal':'Ideal work environment',cA)
-  card(profA.env,cA)
-  if(profA.envIdeal && profA.envIdeal.length>0){
-    subHdr(lang==='fr'?'Lieux qui te correspondent':'Environments that suit you',cA)
-    pills(profA.envIdeal,cA)
-  }
-  if(profA.eviter && profA.eviter.length>0){
-    subHdr(lang==='fr'?'A eviter':'To avoid',RED)
-    eviterBlock(profA.eviter)
-  }
-  subHdr(lang==='fr'?'Message personnel':'Personal message',cA)
-  card(lang==='fr'
-    ?`${cl(eleve.prenom)}, ce rapport est un point de depart, pas un verdict definitif. Ton profil ${cl(profA.nom)} est un veritable atout. Fais confiance a tes forces naturelles et construis ton avenir avec passion et determination !`
+  // Titre section
+  fr(ML,y,3,11,cA); sf(true,12,DRK); tx(lang==='fr'?'Environnement et Conseils':'Environment and Advice',ML+7,y+8.5); y+=15
+
+  // Environnement idéal — cadre blanc + barre gauche
+  chk(30); const envY=y
+  fr(ML,y,3,11,cA); sf(true,10.5,DRK); tx(lang==='fr'?'Environnement de travail ideal':'Ideal work environment',ML+7,y+8); y+=14
+  whiteCard(profA.env,cA)
+  // Pills lieux
+  chk(36); const lieuxY=y
+  pills(profA.envIdeal||[],cA)
+  brd(ML,envY-2,TW,y-envY+4,3,BORDER,0.4); y+=4
+
+  // À éviter (rouge, comme la page)
+  fr(ML,y,3,11,RED); sf(true,10.5,RED); tx(lang==='fr'?'A eviter':'To avoid',ML+7,y+8); y+=14
+  eviterBlock(profA.eviter||[])
+  y+=4
+
+  // Message personnel
+  chk(30); const msgY=y
+  fr(ML,y,3,11,cA); sf(true,10.5,DRK); tx(lang==='fr'?'Message personnel':'Personal message',ML+7,y+8); y+=14
+  const motiv=lang==='fr'
+    ?`${cl(eleve.prenom)}, ce rapport est un point de depart, pas un verdict definitif. Ton profil ${cl(profA.nom)} est un veritable atout. Fais confiance a tes forces naturelles et construis ton avenir avec passion !`
     :`${cl(eleve.prenom)}, this report is a starting point, not a final verdict. Your ${cl(profA.nom)} profile is a real asset. Trust your natural strengths and build your future with passion!`
-  ,cA)
+  whiteCard(motiv,cA)
   ftr()
 
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   // PAGE — NOTE PARENTS
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
   newPg()
-  secHdr(lang==='fr'?'Note pour les parents':'Note for parents',AMB,'♥')
-  card(lang==='fr'
-    ?`Chers parents,\n\nVotre enfant ${cl(eleve.prenom)} a un profil ${cl(profA.nom)} dominant (${scores[classement[0]]}%). Ce resultat est une base de reflexion, pas un verdict definitif. Ce rapport ouvre des pistes, il ne ferme pas de portes.\n\nNous vous recommandons d\'explorer ensemble les domaines compatibles listes dans ce rapport. Les recommandations d\'etablissements seront communiquees par l\'equipe Atlas Tawjih selon la situation, la mobilite et les preferences de votre enfant.`
-    :`Dear parents,\n\nYour child ${cl(eleve.prenom)} has a dominant ${cl(profA.nom)} profile (${scores[classement[0]]}%). This result is a basis for reflection, not a final verdict. This report opens paths, it does not close doors.\n\nWe recommend exploring compatible fields together. Institution recommendations will be provided by the Atlas Tawjih team.`
-  ,AMB)
-  subHdr(lang==='fr'?'Comment accompagner votre enfant':'How to support your child',AMB)
+  fr(ML,y,3,11,AMB); sf(true,12,DRK); tx(lang==='fr'?'Note pour les parents':'Note for parents',ML+7,y+8.5); y+=15
+
+  // Note principale
+  chk(40)
+  const noteY=y
+  const noteText=lang==='fr'
+    ?`Chers parents,\n\nVotre enfant ${cl(eleve.prenom)} a un profil ${cl(profA.nom)} dominant (${scores[classement[0]]}%). Ce resultat est une base de reflexion, pas un verdict definitif. Ce rapport ouvre des pistes, il ne ferme pas de portes.\n\nNous vous recommandons d'explorer ensemble les domaines compatibles listes dans ce rapport. Les recommandations d'etablissements seront communiquees par l'equipe Atlas Tawjih selon la situation et les preferences de votre enfant.`
+    :`Dear parents,\n\nYour child ${cl(eleve.prenom)} has a dominant ${cl(profA.nom)} profile (${scores[classement[0]]}%). This result is a basis for reflection, not a final verdict. This report opens paths.\n\nWe recommend exploring compatible fields together. Institution recommendations will be provided by the Atlas Tawjih team.`
+  const noteLs=doc.splitTextToSize(cl(noteText),TW-12), noteH=noteLs.length*5.8+14
+  bx(ML,y,TW,noteH,3,AMBBG); brd(ML,y,TW,noteH,3,[253,230,138],0.5); fr(ML,y,3,noteH,AMB)
+  sf(false,10,DRK); doc.text(noteLs,ML+8,y+9)
+  y+=noteH+8
+
+  // Conseils parents — tableau
+  chk(12)
+  fr(ML,y,3,11,AMB); sf(true,10.5,DRK); tx(lang==='fr'?'Comment accompagner votre enfant':'How to support your child',ML+7,y+8); y+=14
   ;(lang==='fr'?[
     [`Ne pas imposer`,`Laissez votre enfant explorer ses interets naturels sans imposer de filiere.`],
     [`Valoriser les interets`,`Soutenez ses passions meme si elles semblent inhabituelles.`],
     [`Offrir des ressources`,`Livres, stages, visites : tout ce qui nourrit son projet est utile.`],
     [`Respecter l'autonomie`,`Il a besoin d'espace pour reflechir et construire son projet.`],
-    [`Contacter Atlas Tawjih`,`Notre equipe accompagne votre enfant dans ses demarches d'orientation.`],
+    [`Contacter Atlas Tawjih`,`Notre equipe accompagne votre enfant dans ses demarches.`],
   ]:[
     [`Do not impose`,`Let your child explore natural interests without imposing a field.`],
     [`Value interests`,`Support their passions even if unusual.`],
     [`Offer resources`,`Books, internships, visits: everything builds their project.`],
     [`Respect autonomy`,`They need space to think and build their project.`],
     [`Contact Atlas Tawjih`,`Our team supports your child through their orientation journey.`],
-  ]).forEach(([t,d],i)=>trow(t,d,AMB,i))
+  ]).forEach(([t,d])=>parentRow(t,d,AMB))
   ftr()
 
-  // ────────────────────────────────────────────────────────
-  // PAGE FINALE — RECAP PREMIUM
-  // ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
+  // PAGE FINALE — RECAP (TOUT SUR UNE SEULE PAGE)
+  // ════════════════════════════════════════════════════════
   newPg()
-  secHdr(lang==='fr'?'Recapitulatif':'Summary',DRK,'◎')
+  fr(ML,y,3,11,cA); sf(true,12,DRK)
+  tx(lang==='fr'?'Graphique radar - Vue d\'ensemble':'Radar chart - Overview',ML+7,y+8.5); y+=15
 
-  // ── Infos élève ──
-  subHdr(lang==='fr'?"Informations de l'eleve":'Student information',cA)
-  const mobV=eleve.mobilite==='oui'?(lang==='fr'?'Oui - toute ville':'Yes - any city'):eleve.mobilite==='non'?(lang==='fr'?'Non':'No'):(lang==='fr'?'Certaines villes':'Certain cities')
-  ;[
-    [lang==='fr'?'Nom complet':'Full name',`${cl(eleve.prenom)} ${cl(eleve.nom)}`],
-    [lang==='fr'?'Filiere Bac':'Field',cl(eleve.filiere)],
-    ['Ville',cl(eleve.ville)],
-    [lang==='fr'?'Mobilite':'Mobility',mobV],
-    [lang==='fr'?'Prive':'Private',eleve.prive==='oui'?(lang==='fr'?'Oui':'Yes'):(lang==='fr'?'Non':'No')],
-    [lang==='fr'?'Date':'Date',new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US')],
-    ['Code Holland',`${code3}  ·  ${cl(profA.nom)} / ${cl(profB.nom)} / ${cl(profC.nom)}`],
-  ].forEach(([k,v],i)=>infoRow(k,v,cA,i%2===0))
-  y+=10
-
-  // ── Diagramme en radar visuel (hexagone RIASEC) ──
-  subHdr(lang==='fr'?'Profil RIASEC — Diagramme':'RIASEC Profile — Chart',cA)
-
+  // ── Radar hexagonal (gauche) + Tableau barres (droite) ──
+  const radarW=80, tableX=ML+radarW+8, tableW=TW-radarW-8
+  const cx=ML+radarW/2, cy=y+38, R6=30
   const dims6=['R','I','A','S','E','C']
-  const cx=W/2, cy=y+44, R6=34
   const angles=dims6.map((_,i)=>(-Math.PI/2)+(i*2*Math.PI/6))
 
-  // Background hexagon
-  dr(BORDER); doc.setLineWidth(0.5)
+  // Grille radar
   ;[0.25,0.5,0.75,1].forEach(scale=>{
-    doc.moveTo(cx+R6*scale*Math.cos(angles[0]), cy+R6*scale*Math.sin(angles[0]))
-    angles.forEach(a=>doc.lineTo(cx+R6*scale*Math.cos(a),cy+R6*scale*Math.sin(a)))
+    dr(scale===1?BORDER:[235,237,242]); doc.setLineWidth(scale===1?0.5:0.3)
+    const pts2=angles.map(a=>[cx+R6*scale*Math.cos(a),cy+R6*scale*Math.sin(a)])
+    doc.moveTo(pts2[0][0],pts2[0][1])
+    pts2.forEach(p=>doc.lineTo(p[0],p[1]))
     doc.close(); doc.stroke()
   })
+  // Axes
+  angles.forEach(a=>{dr(BORDER);doc.setLineWidth(0.3);doc.line(cx,cy,cx+R6*Math.cos(a),cy+R6*Math.sin(a))})
 
-  // Axis lines
-  angles.forEach(a=>{
-    dr(BORDER); doc.setLineWidth(0.4)
-    doc.line(cx,cy,cx+R6*Math.cos(a),cy+R6*Math.sin(a))
-  })
-
-  // Data polygon — FILLED
-  const pts=dims6.map((d,i)=>{
-    const sc=scores[d]/100
-    return [cx+R6*sc*Math.cos(angles[i]),cy+R6*sc*Math.sin(angles[i])]
-  })
-  // Fill
-  doc.setFillColor(cA[0],cA[1],cA[2]); doc.setGState(doc.GState({opacity:0.25}))
-  doc.moveTo(pts[0][0],pts[0][1])
-  pts.forEach(p=>doc.lineTo(p[0],p[1]))
-  doc.close(); doc.fill()
-  doc.setGState(doc.GState({opacity:1}))
-  // Border
+  // Zone colorée (profil)
+  const dataPts=dims6.map((d,i)=>[cx+R6*(scores[d]/100)*Math.cos(angles[i]),cy+R6*(scores[d]/100)*Math.sin(angles[i])])
+  doc.setFillColor(cA[0],cA[1],cA[2])
+  try{doc.setGState(doc.GState({opacity:0.25}));} catch(e){}
+  doc.moveTo(dataPts[0][0],dataPts[0][1]); dataPts.forEach(p=>doc.lineTo(p[0],p[1])); doc.close(); doc.fill()
+  try{doc.setGState(doc.GState({opacity:1}));} catch(e){}
+  // Contour
   dr(cA); doc.setLineWidth(1.2)
-  doc.moveTo(pts[0][0],pts[0][1])
-  pts.forEach(p=>doc.lineTo(p[0],p[1]))
-  doc.close(); doc.stroke()
-  // Dots on data points
-  pts.forEach(([px,py],i)=>{
-    doc.setFillColor(cA[0],cA[1],cA[2]); doc.circle(px,py,1.8,'F')
+  doc.moveTo(dataPts[0][0],dataPts[0][1]); dataPts.forEach(p=>doc.lineTo(p[0],p[1])); doc.close(); doc.stroke()
+  // Points
+  dataPts.forEach(([px,py])=>{fl(cA);doc.circle(px,py,1.5,'F')})
+  // Labels
+  dims6.forEach((d,i)=>{
+    const lx=cx+(R6+9)*Math.cos(angles[i]), ly=cy+(R6+9)*Math.sin(angles[i])
+    sf(true,8,RGB[d]); tx(d,lx,ly+1,'center')
   })
 
-  // Labels around hexagon
+  // Tableau barres horizontales (droite)
+  let ty=y
   dims6.forEach((d,i)=>{
     const sc=scores[d], cc=RGB[d]
-    const lx=cx+(R6+10)*Math.cos(angles[i])
-    const ly=cy+(R6+10)*Math.sin(angles[i])
-    sf(true,8,cc); tx(d,lx,ly+1,'center')
-    sf(false,7,GRY); tx(`${sc}%`,lx,ly+5.5,'center')
+    const barW=tableW-30, barH=5.5, barX=tableX+22
+    sf(true,9,cc); tx(d,tableX,ty+5)
+    sf(false,8.5,GRY); tx(cl(PROFILS[d][lang].nom).slice(0,12),tableX+8,ty+5)
+    bx(barX,ty,barW,barH,2,BORDER); bx(barX,ty,Math.max(1,barW*sc/100),barH,2,cc)
+    sf(true,9,cc); tx(`${sc}%`,tableX+tableW,ty+5,'right')
+    ty+=11
   })
-  y=cy+R6+22
+  y=cy+R6+14
 
-  // ── Barres verticales côte à côte ──
-  subHdr(lang==='fr'?'Scores detailles':'Detailed scores',cA)
-  const bW=24, bMH=36, bGap=5, bSX=ML+10, bBY=y+bMH+6
-  dims6.forEach((d,i)=>{
-    const sc=scores[d], bh=Math.max(2,(sc/100)*bMH)
-    const bx2=bSX+i*(bW+bGap), by2=bBY-bh, cc=RGB[d]
-    bx(bx2,bBY-bMH,bW,bMH,2,BORDER)
-    bx(bx2,by2,bW,bh,2,cc)
-    sf(true,8.5,cc); tx(`${sc}%`,bx2+bW/2,by2-2,'center')
-    sf(true,9.5,DRK); tx(d,bx2+bW/2,bBY+5,'center')
-    sf(false,7,GRY)
-    doc.splitTextToSize(cl(PROFILS[d][lang].nom),bW+4)
-      .forEach((l,li)=>tx(l,bx2+bW/2,bBY+10+li*4,'center'))
+  // Interprétation niveaux (comme screenshot)
+  chk(38)
+  fr(ML,y,3,11,cA); sf(true,10,DRK); tx(lang==='fr'?'Interpretation des niveaux':'Level interpretation',ML+7,y+8); y+=14
+  const levels=lang==='fr'
+    ?[['0 - 30%','Faible interet',[148,163,184]],['31 - 55%','Interet modere',cA],['56 - 75%','Fort interet',cA],['76 - 100%','Tres fort interet',cA]]
+    :[['0 - 30%','Low interest',[148,163,184]],['31 - 55%','Moderate interest',cA],['56 - 75%','Strong interest',cA],['76 - 100%','Very strong interest',cA]]
+  const levW=TW/2
+  levels.forEach(([range,label,col],i)=>{
+    const lx=ML+(i%2)*levW, lW=levW-4
+    bx(lx,y,lW,9,2,i===0?LIGHT:mix(col,0.9)); brd(lx,y,lW,9,2,BORDER,0.3)
+    sf(true,8.5,i===0?GRY:col); tx(range,lx+5,y+6.5)
+    sf(false,8,i===0?GRY:drk(col,0.1)); tx(label,lx+28,y+6.5)
+    if(i%2===1) y+=11
   })
-  y=bBY+22
+  y+=14
 
-  // ── A propos ──
-  subHdr('Atlas Tawjih',cA)
-  card(lang==='fr'
-    ?`Atlas Tawjih est une plateforme d\'orientation dediee aux bacheliers marocains. Notre mission : aider chaque eleve a decouvrir son profil et s\'orienter vers la filiere qui lui correspond. Nous gerons les candidatures aux ecoles et bourses avec un suivi national jusqu\'a la fin du parcours.`
-    :`Atlas Tawjih is an orientation platform for Moroccan students. We help every student discover their profile and find the right field. We handle applications to schools and scholarships with full national follow-up.`
-  ,cA)
+  // Infos élève compact
+  fr(ML,y,3,11,cA); sf(true,10,DRK); tx(lang==='fr'?"Informations de l'eleve":'Student information',ML+7,y+8); y+=14
+  const mobV=eleve.mobilite==='oui'?(lang==='fr'?'Oui - toute ville':'Yes - any city'):eleve.mobilite==='non'?(lang==='fr'?'Non':'No'):(lang==='fr'?'Certaines villes':'Certain cities')
+  ;[
+    [lang==='fr'?'Nom':'Name',`${cl(eleve.prenom)} ${cl(eleve.nom)}`],
+    [lang==='fr'?'Filiere':'Field',cl(eleve.filiere)],
+    ['Ville',cl(eleve.ville)],
+    [lang==='fr'?'Mobilite':'Mobility',mobV],
+    ['Code Holland',`${code3} - ${cl(profA.nom)} / ${cl(profB.nom)} / ${cl(profC.nom)}`],
+  ].forEach(([k,v],i)=>{
+    const h=9
+    bx(ML,y,TW,h,0,i%2===0?LIGHT:WHT); brd(ML,y,TW,h,0,BORDER,0.3); fr(ML,y,3,h,cA)
+    sf(true,9,DRK); tx(cl(String(k)),ML+6,y+6.5)
+    sf(false,9,GRY); tx(cl(String(v||'')),ML+TW*0.38,y+6.5)
+    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML,y+h,W-MR,y+h)
+    y+=h
+  })
+  y+=8
 
-  // ── Signature premium ──
-  chk(36)
-  dr(BORDER); doc.setLineWidth(0.8); doc.line(ML,y,W-MR,y); y+=8
-  // Left — certifié par
-  sf(false,8.5,GRY); tx(lang==='fr'?'Certifie et etabli par :':'Certified and issued by:',ML,y)
-  y+=6
-  sf(true,14,DRK); tx('Atlas Tawjih',ML,y)
-  sf(false,8,GRY); tx('atlastawjih.maroc@gmail.com',ML,y+6)
-  sf(false,8,GRY); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),ML,y+12)
-  // Right — stamp box premium
-  bx(W/2+4,y-8,TW/2-4,34,4,cA)
-  fr(W/2+4,y-8,TW/2-4,8,dark(cA,0.15))
-  sf(true,14,WHT); tx('ATLAS TAWJIH',W/2+4+(TW/2-4)/2,y+4,'center')
-  sf(false,8.5,mix(cA,0.4)); tx('atlastawjih.maroc@gmail.com',W/2+4+(TW/2-4)/2,y+12,'center')
-  // QR-like decorative element
-  bx(W/2+4+(TW/2-4)/2-8,y+16,16,10,2,dark(cA,0.15))
-  sf(false,7,WHT); tx(lang==='fr'?'Rapport officiel':'Official report',W/2+4+(TW/2-4)/2,y+22,'center')
-  y+=30
+  // Contact & Suivi
+  fr(ML,y,3,11,cA); sf(true,10,DRK); tx(lang==='fr'?'Contact et Suivi':'Contact and Follow-up',ML+7,y+8); y+=14
+  ;[
+    ['Site web','atlas-tawjih.vercel.app'],
+    ['Email','atlastawjih.maroc@gmail.com'],
+    [lang==='fr'?'Suivi':'Follow-up',lang==='fr'?'Notre equipe vous accompagne dans vos demarches d\'orientation.':'Our team supports you through your orientation journey.'],
+  ].forEach(([k,v],i)=>{
+    const ls2=doc.splitTextToSize(cl(v),TW*0.62-4), h2=Math.max(9,ls2.length*5.2+7)
+    bx(ML,y,TW,h2,0,i%2===0?LIGHT:WHT); brd(ML,y,TW,h2,0,BORDER,0.3)
+    sf(true,9.5,DRK); tx(cl(k),ML+5,y+h2/2+1.5)
+    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML+TW*0.36,y+2,ML+TW*0.36,y+h2-2)
+    sf(false,9,GRY); doc.text(ls2,ML+TW*0.37,y+7)
+    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML,y+h2,W-MR,y+h2)
+    y+=h2
+  })
+  y+=10
+
+  // Signature premium
+  dr(cA); doc.setLineWidth(0.8); doc.line(ML+20,y,W/2,y)
+  dr(cA); doc.line(W/2+20,y,W-MR-20,y); y+=6
+  sf(false,8.5,GRY); tx(lang==='fr'?'Certifie par':'Certified by',ML+20,y)
+  tx(lang==='fr'?'Cachet et Signature':'Stamp and Signature',W/2+20,y); y+=6
+  sf(true,13,DRK); tx(lang==='fr'?'Equipe Atlas Tawjih':'Atlas Tawjih Team',ML+20,y)
+  sf(false,8,GRY); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),ML+20,y+7)
+  // Cachet coloré
+  bx(W/2+20,y-4,TW/2-20,22,4,cA)
+  sf(true,12,WHT); tx('ATLAS TAWJIH',W/2+20+(TW/2-20)/2,y+5,'center')
+  sf(false,8,mix(cA,0.35)); tx('atlastawjih.maroc@gmail.com',W/2+20+(TW/2-20)/2,y+12,'center')
+  sf(false,7,mix(cA,0.3)); tx(lang==='fr'?'Rapport officiel':'Official report',W/2+20+(TW/2-20)/2,y+18,'center')
+  y+=28
+
+  // Disclaimer
+  dr(BORDER); doc.setLineWidth(0.5); doc.line(ML,y,W-MR,y); y+=5
+  const disc=lang==='fr'
+    ?`Ce rapport a ete genere automatiquement par la plateforme Atlas Tawjih. Les resultats sont bases sur les reponses fournies par l'eleve lors du test RIASEC. Ce document est confidentiel - toute reproduction partielle ou totale est interdite sans autorisation.`
+    :`This report was automatically generated by the Atlas Tawjih platform. Results are based on the student's RIASEC test responses. This document is confidential — any partial or total reproduction is prohibited without authorization.`
+  const discLs=doc.splitTextToSize(cl(disc),TW)
+  sf(false,7.5,LGT); doc.text(discLs,ML,y+4)
 
   ftr()
   doc.save(`AtlasTawjih_${cl(eleve.prenom)}_${cl(eleve.nom)}_${code3}.pdf`)
