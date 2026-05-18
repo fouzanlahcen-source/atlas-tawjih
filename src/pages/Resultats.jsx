@@ -1019,8 +1019,8 @@ async function genererPDF(eleve, scores, classement, lang) {
     const ls=doc.splitTextToSize(cl(col2), TW*0.60-4)
     const h=Math.max(11, ls.length*5.3+9)
     chk(h+2)
-    // Row bg — very light grey or white
-    bx(ML,y,TW,h,0, even?[245,247,250]:WHT)
+    // Row bg — pure WHITE always
+    bx(ML,y,TW,h,0, WHT)
     // Left colored bar
     fillRect(ML,y,3,h,col)
     // Column 1 — BOLD COLORED text (readable on light bg)
@@ -1030,7 +1030,10 @@ async function genererPDF(eleve, scores, classement, lang) {
     doc.line(ML+TW*0.37, y+2, ML+TW*0.37, y+h-2)
     // Column 2 — dark grey text
     sf(false,9,GRY); doc.text(ls,ML+TW*0.38,y+7)
-    y+=h+1
+    // Thin separator line between rows
+    dr(BORDER); doc.setLineWidth(0.3)
+    doc.line(ML,y+h,W-MR,y+h)
+    y+=h+2
   }
 
   // ── Plan header badge (like plan badges on page) ──
