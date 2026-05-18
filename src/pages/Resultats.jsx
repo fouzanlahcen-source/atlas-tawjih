@@ -1224,69 +1224,67 @@ export default function Resultats() {
 
 
         {/* ── RADAR GRAPHIQUE ── */}
-        <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:16, display:'flex', alignItems:'center', gap:6 }}>
-            <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
-            {lang==='fr' ? `Graphique radar - Vue ensemble` : `Radar chart - Overview`}
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, alignItems:'center' }}>
-            {/* SVG Radar */}
-            <div style={{ display:'flex', justifyContent:'center' }}>
-              <svg width="200" height="200" viewBox="0 0 200 200">
-                {(() => {
-                  const dims6=['R','I','A','S','E','C']
-                  const cx=100, cy=100, R=70
-                  const angles=dims6.map((_,i)=>(-Math.PI/2)+(i*2*Math.PI/6))
-                  const hexPts=(r)=>dims6.map((_,i)=>[cx+r*Math.cos(angles[i]),cy+r*Math.sin(angles[i])])
-                  const toPath=(pts)=>pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'Z'
-                  const DIM_COLORS_MAP={R:'#EF4444',I:'#3B82F6',A:'#8B5CF6',S:'#10B981',E:'#F59E0B',C:'#06B6D4'}
-                  const dataPts=dims6.map((d,i)=>[cx+R*(scores[d]/100)*Math.cos(angles[i]),cy+R*(scores[d]/100)*Math.sin(angles[i])])
-                  return (<>
-                    {[0.25,0.5,0.75,1].map(s=>(
-                      <polygon key={s} points={hexPts(R*s).map(p=>p.join(',')).join(' ')} fill="none" stroke="#E2E8F0" strokeWidth={s===1?0.8:0.5} />
-                    ))}
-                    {angles.map((a,i)=>(
-                      <line key={i} x1={cx} y1={cy} x2={cx+R*Math.cos(a)} y2={cy+R*Math.sin(a)} stroke="#E2E8F0" strokeWidth="0.5" />
-                    ))}
-                    <polygon points={dataPts.map(p=>p.join(',')).join(' ')} fill={DIM_COLORS[classement[0]]+'33'} stroke={DIM_COLORS[classement[0]]} strokeWidth="1.5" />
-                    {dataPts.map(([x,z],i)=>(<circle key={i} cx={x} cy={z} r="3" fill={DIM_COLORS[classement[0]]} />))}
-                    {dims6.map((d,i)=>{
-                      const lx=cx+(R+14)*Math.cos(angles[i]), ly=cy+(R+14)*Math.sin(angles[i])
-                      return (<text key={d} x={lx} y={ly+4} textAnchor="middle" fontSize="9" fontWeight="700" fill={DIM_COLORS_MAP[d]}>{d}</text>)
-                    })}
-                  </>)
-                })()}
-              </svg>
-            </div>
-            {/* Barres horizontales */}
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {getClassement(scores).map(dim => (
-                <div key={dim} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:12 }}>{dim}</span>
-                  <span style={{ fontSize:10, color:'#64748B', width:90 }}>{PROFILS[dim][lang].nom}</span>
-                  <div style={{ flex:1, height:10, background:'#F1F5F9', borderRadius:4, overflow:'hidden' }}>
-                    <div style={{ width:`${scores[dim]}%`, height:'100%', background:DIM_COLORS[dim], borderRadius:4 }} />
-                  </div>
-                  <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:32, textAlign:'right' }}>{scores[dim]}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Interprétation niveaux */}
-          <div style={{ marginTop:16, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6 }}>
-            {[
-              ['0–30%',   lang==='fr'?'Faible interet':'Low interest',       '#94A3B8','#F8FAFC'],
-              ['31–55%',  lang==='fr'?'Interet modere':'Moderate interest',   DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}15`],
-              ['56–75%',  lang==='fr'?'Fort interet':'Strong interest',        DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}20`],
-              ['76–100%', lang==='fr'?'Tres fort interet':'Very strong',       DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}30`],
-            ].map(([range,label,col,bg])=>(
-              <div key={range} style={{ background:bg, border:`1px solid ${col}30`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
-                <div style={{ fontSize:11, fontWeight:700, color:col }}>{range}</div>
-                <div style={{ fontSize:10, color:'#64748B', marginTop:2 }}>{label}</div>
+        {(() => {
+          const dims6=['R','I','A','S','E','C']
+          const cx=100, cy=100, R=70
+          const angles=dims6.map((_,i)=>(-Math.PI/2)+(i*2*Math.PI/6))
+          const hexPts=(r)=>dims6.map((_,i)=>[cx+r*Math.cos(angles[i]),cy+r*Math.sin(angles[i])])
+          const dataPts=dims6.map((d,i)=>[cx+R*(scores[d]/100)*Math.cos(angles[i]),cy+R*(scores[d]/100)*Math.sin(angles[i])])
+          const ptStr=(pts)=>pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')
+          const DIM_COL={R:'#EF4444',I:'#3B82F6',A:'#8B5CF6',S:'#10B981',E:'#F59E0B',C:'#06B6D4'}
+          return (
+            <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:16, display:'flex', alignItems:'center', gap:6 }}>
+                <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+                {lang==='fr' ? `Graphique radar - Vue ensemble` : `Radar chart - Overview`}
               </div>
-            ))}
-          </div>
-        </div>
+              <div style={{ display:'grid', gridTemplateColumns:'200px 1fr', gap:24, alignItems:'center' }}>
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                  {[0.25,0.5,0.75,1].map(s=>(
+                    <polygon key={s} points={ptStr(hexPts(R*s))} fill="none" stroke={s===1?'#CBD5E1':'#E2E8F0'} strokeWidth={s===1?0.8:0.4} />
+                  ))}
+                  {angles.map((a,i)=>(
+                    <line key={i} x1={cx} y1={cy} x2={(cx+R*Math.cos(a)).toFixed(1)} y2={(cy+R*Math.sin(a)).toFixed(1)} stroke="#E2E8F0" strokeWidth="0.4" />
+                  ))}
+                  <polygon points={ptStr(dataPts)} fill={DIM_COLORS[classement[0]]+'33'} stroke={DIM_COLORS[classement[0]]} strokeWidth="1.8" />
+                  {dataPts.map(([x,z],i)=>(
+                    <circle key={i} cx={x.toFixed(1)} cy={z.toFixed(1)} r="3" fill={DIM_COLORS[classement[0]]} />
+                  ))}
+                  {dims6.map((d,i)=>{
+                    const lx=(cx+(R+14)*Math.cos(angles[i])).toFixed(1)
+                    const ly=(cy+(R+14)*Math.sin(angles[i])).toFixed(1)
+                    return <text key={d} x={lx} y={ly} dy="4" textAnchor="middle" fontSize="9" fontWeight="700" fill={DIM_COL[d]}>{d}</text>
+                  })}
+                </svg>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {getClassement(scores).map(dim=>(
+                    <div key={dim} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:14 }}>{dim}</span>
+                      <span style={{ fontSize:10, color:'#64748B', width:95 }}>{PROFILS[dim][lang].nom}</span>
+                      <div style={{ flex:1, height:10, background:'#F1F5F9', borderRadius:4, overflow:'hidden' }}>
+                        <div style={{ width:`${scores[dim]}%`, height:'100%', background:DIM_COLORS[dim], borderRadius:4 }} />
+                      </div>
+                      <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:34, textAlign:'right' }}>{scores[dim]}%</span>
+                    </div>
+                  ))}
+                  <div style={{ marginTop:8, display:'grid', gridTemplateColumns:'1fr 1fr', gap:4 }}>
+                    {[
+                      ['0-30%',   lang==='fr'?'Faible':'Low',        '#94A3B8','#F8FAFC'],
+                      ['31-55%',  lang==='fr'?'Modere':'Moderate',   DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}15`],
+                      ['56-75%',  lang==='fr'?'Fort':'Strong',       DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}22`],
+                      ['76-100%', lang==='fr'?'Tres fort':'V.Strong', DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}33`],
+                    ].map(([range,label,col,bg])=>(
+                      <div key={range} style={{ background:bg, border:`1px solid ${col}30`, borderRadius:6, padding:'4px 8px', display:'flex', gap:6, alignItems:'center' }}>
+                        <span style={{ fontSize:10, fontWeight:700, color:col }}>{range}</span>
+                        <span style={{ fontSize:10, color:'#64748B' }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── RECAPITULATIF SIMPLE ── */}
         <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
@@ -1885,69 +1883,67 @@ export default function Resultats() {
 
 
         {/* ── RADAR GRAPHIQUE ── */}
-        <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:16, display:'flex', alignItems:'center', gap:6 }}>
-            <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
-            {lang==='fr' ? `Graphique radar - Vue ensemble` : `Radar chart - Overview`}
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, alignItems:'center' }}>
-            {/* SVG Radar */}
-            <div style={{ display:'flex', justifyContent:'center' }}>
-              <svg width="200" height="200" viewBox="0 0 200 200">
-                {(() => {
-                  const dims6=['R','I','A','S','E','C']
-                  const cx=100, cy=100, R=70
-                  const angles=dims6.map((_,i)=>(-Math.PI/2)+(i*2*Math.PI/6))
-                  const hexPts=(r)=>dims6.map((_,i)=>[cx+r*Math.cos(angles[i]),cy+r*Math.sin(angles[i])])
-                  const toPath=(pts)=>pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'Z'
-                  const DIM_COLORS_MAP={R:'#EF4444',I:'#3B82F6',A:'#8B5CF6',S:'#10B981',E:'#F59E0B',C:'#06B6D4'}
-                  const dataPts=dims6.map((d,i)=>[cx+R*(scores[d]/100)*Math.cos(angles[i]),cy+R*(scores[d]/100)*Math.sin(angles[i])])
-                  return (<>
-                    {[0.25,0.5,0.75,1].map(s=>(
-                      <polygon key={s} points={hexPts(R*s).map(p=>p.join(',')).join(' ')} fill="none" stroke="#E2E8F0" strokeWidth={s===1?0.8:0.5} />
-                    ))}
-                    {angles.map((a,i)=>(
-                      <line key={i} x1={cx} y1={cy} x2={cx+R*Math.cos(a)} y2={cy+R*Math.sin(a)} stroke="#E2E8F0" strokeWidth="0.5" />
-                    ))}
-                    <polygon points={dataPts.map(p=>p.join(',')).join(' ')} fill={DIM_COLORS[classement[0]]+'33'} stroke={DIM_COLORS[classement[0]]} strokeWidth="1.5" />
-                    {dataPts.map(([x,z],i)=>(<circle key={i} cx={x} cy={z} r="3" fill={DIM_COLORS[classement[0]]} />))}
-                    {dims6.map((d,i)=>{
-                      const lx=cx+(R+14)*Math.cos(angles[i]), ly=cy+(R+14)*Math.sin(angles[i])
-                      return (<text key={d} x={lx} y={ly+4} textAnchor="middle" fontSize="9" fontWeight="700" fill={DIM_COLORS_MAP[d]}>{d}</text>)
-                    })}
-                  </>)
-                })()}
-              </svg>
-            </div>
-            {/* Barres horizontales */}
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {getClassement(scores).map(dim => (
-                <div key={dim} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:12 }}>{dim}</span>
-                  <span style={{ fontSize:10, color:'#64748B', width:90 }}>{PROFILS[dim][lang].nom}</span>
-                  <div style={{ flex:1, height:10, background:'#F1F5F9', borderRadius:4, overflow:'hidden' }}>
-                    <div style={{ width:`${scores[dim]}%`, height:'100%', background:DIM_COLORS[dim], borderRadius:4 }} />
-                  </div>
-                  <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:32, textAlign:'right' }}>{scores[dim]}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Interprétation niveaux */}
-          <div style={{ marginTop:16, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6 }}>
-            {[
-              ['0–30%',   lang==='fr'?'Faible interet':'Low interest',       '#94A3B8','#F8FAFC'],
-              ['31–55%',  lang==='fr'?'Interet modere':'Moderate interest',   DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}15`],
-              ['56–75%',  lang==='fr'?'Fort interet':'Strong interest',        DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}20`],
-              ['76–100%', lang==='fr'?'Tres fort interet':'Very strong',       DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}30`],
-            ].map(([range,label,col,bg])=>(
-              <div key={range} style={{ background:bg, border:`1px solid ${col}30`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
-                <div style={{ fontSize:11, fontWeight:700, color:col }}>{range}</div>
-                <div style={{ fontSize:10, color:'#64748B', marginTop:2 }}>{label}</div>
+        {(() => {
+          const dims6=['R','I','A','S','E','C']
+          const cx=100, cy=100, R=70
+          const angles=dims6.map((_,i)=>(-Math.PI/2)+(i*2*Math.PI/6))
+          const hexPts=(r)=>dims6.map((_,i)=>[cx+r*Math.cos(angles[i]),cy+r*Math.sin(angles[i])])
+          const dataPts=dims6.map((d,i)=>[cx+R*(scores[d]/100)*Math.cos(angles[i]),cy+R*(scores[d]/100)*Math.sin(angles[i])])
+          const ptStr=(pts)=>pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')
+          const DIM_COL={R:'#EF4444',I:'#3B82F6',A:'#8B5CF6',S:'#10B981',E:'#F59E0B',C:'#06B6D4'}
+          return (
+            <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:16, display:'flex', alignItems:'center', gap:6 }}>
+                <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+                {lang==='fr' ? `Graphique radar - Vue ensemble` : `Radar chart - Overview`}
               </div>
-            ))}
-          </div>
-        </div>
+              <div style={{ display:'grid', gridTemplateColumns:'200px 1fr', gap:24, alignItems:'center' }}>
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                  {[0.25,0.5,0.75,1].map(s=>(
+                    <polygon key={s} points={ptStr(hexPts(R*s))} fill="none" stroke={s===1?'#CBD5E1':'#E2E8F0'} strokeWidth={s===1?0.8:0.4} />
+                  ))}
+                  {angles.map((a,i)=>(
+                    <line key={i} x1={cx} y1={cy} x2={(cx+R*Math.cos(a)).toFixed(1)} y2={(cy+R*Math.sin(a)).toFixed(1)} stroke="#E2E8F0" strokeWidth="0.4" />
+                  ))}
+                  <polygon points={ptStr(dataPts)} fill={DIM_COLORS[classement[0]]+'33'} stroke={DIM_COLORS[classement[0]]} strokeWidth="1.8" />
+                  {dataPts.map(([x,z],i)=>(
+                    <circle key={i} cx={x.toFixed(1)} cy={z.toFixed(1)} r="3" fill={DIM_COLORS[classement[0]]} />
+                  ))}
+                  {dims6.map((d,i)=>{
+                    const lx=(cx+(R+14)*Math.cos(angles[i])).toFixed(1)
+                    const ly=(cy+(R+14)*Math.sin(angles[i])).toFixed(1)
+                    return <text key={d} x={lx} y={ly} dy="4" textAnchor="middle" fontSize="9" fontWeight="700" fill={DIM_COL[d]}>{d}</text>
+                  })}
+                </svg>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {getClassement(scores).map(dim=>(
+                    <div key={dim} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:14 }}>{dim}</span>
+                      <span style={{ fontSize:10, color:'#64748B', width:95 }}>{PROFILS[dim][lang].nom}</span>
+                      <div style={{ flex:1, height:10, background:'#F1F5F9', borderRadius:4, overflow:'hidden' }}>
+                        <div style={{ width:`${scores[dim]}%`, height:'100%', background:DIM_COLORS[dim], borderRadius:4 }} />
+                      </div>
+                      <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:34, textAlign:'right' }}>{scores[dim]}%</span>
+                    </div>
+                  ))}
+                  <div style={{ marginTop:8, display:'grid', gridTemplateColumns:'1fr 1fr', gap:4 }}>
+                    {[
+                      ['0-30%',   lang==='fr'?'Faible':'Low',        '#94A3B8','#F8FAFC'],
+                      ['31-55%',  lang==='fr'?'Modere':'Moderate',   DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}15`],
+                      ['56-75%',  lang==='fr'?'Fort':'Strong',       DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}22`],
+                      ['76-100%', lang==='fr'?'Tres fort':'V.Strong', DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}33`],
+                    ].map(([range,label,col,bg])=>(
+                      <div key={range} style={{ background:bg, border:`1px solid ${col}30`, borderRadius:6, padding:'4px 8px', display:'flex', gap:6, alignItems:'center' }}>
+                        <span style={{ fontSize:10, fontWeight:700, color:col }}>{range}</span>
+                        <span style={{ fontSize:10, color:'#64748B' }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── RECAPITULATIF SIMPLE ── */}
         <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
