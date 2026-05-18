@@ -1013,21 +1013,22 @@ async function genererPDF(eleve, scores, classement, lang) {
     y=ry+11
   }
 
-  // ── Table row — 2 cols with alternating bg (exactly like points forts) ──
+  // ── Table row — like points forts on page web ──
+  // Even: very light grey bg. Odd: white bg. Text ALWAYS dark/readable
   const trow = (col1, col2, col, even) => {
     const ls=doc.splitTextToSize(cl(col2), TW*0.60-4)
     const h=Math.max(11, ls.length*5.3+9)
     chk(h+2)
-    // Alternating row bg
-    bx(ML,y,TW,h,0, even?mix(col,0.08):WHT)
+    // Row bg — very light grey or white
+    bx(ML,y,TW,h,0, even?[245,247,250]:WHT)
     // Left colored bar
     fillRect(ML,y,3,h,col)
-    // Column 1 — bold colored text
+    // Column 1 — BOLD COLORED text (readable on light bg)
     sf(true,9.5,col); tx(cl(col1),ML+6,y+h/2+1.5)
-    // Vertical separator line
-    dr(mix(col,0.4)); doc.setLineWidth(0.25)
+    // Vertical separator
+    dr(BORDER); doc.setLineWidth(0.25)
     doc.line(ML+TW*0.37, y+2, ML+TW*0.37, y+h-2)
-    // Column 2 — dark readable text
+    // Column 2 — dark grey text
     sf(false,9,GRY); doc.text(ls,ML+TW*0.38,y+7)
     y+=h+1
   }
@@ -1046,40 +1047,45 @@ async function genererPDF(eleve, scores, classement, lang) {
     y+=29
   }
 
-  // ── Metiers block — category + items grid ──
+  // ── Metiers block — EXACTLY like page web ──
+  // Category: colored bg + white text
+  // Cards: WHITE bg + colored left border + colored bold title + grey description
   const metBlock = (metiers, col) => {
     metiers.forEach(({cat,liste}) => {
       chk(14)
-      // Category badge — colored bg, white text (readable)
-      bx(ML,y,TW,8,2,col)
-      fillRect(ML,y,3,8,drk(col,0.2))
-      sf(true,9.5,WHT); tx(cl(cat),ML+7,y+5.8)
-      y+=10
-      // Items — 2 per row
+      // Category badge — colored bg, WHITE text
+      bx(ML,y,TW,9,2,col)
+      fillRect(ML,y,4,9,drk(col,0.2))
+      sf(true,10,WHT); tx(cl(cat),ML+8,y+6.5)
+      y+=12
+      // Items — 2 per row, WHITE background
       for(let i=0;i<liste.length;i+=2){
         const left  = liste[i]
         const right = liste[i+1]
-        // Calculate max height for this row
-        const lDesc = doc.splitTextToSize(cl(left[1]), TW/2-14)
+        const lDesc = doc.splitTextToSize(cl(left[1]),  TW/2-14)
         const rDesc = right ? doc.splitTextToSize(cl(right[1]), TW/2-14) : []
-        const h = Math.max(14, Math.max(lDesc.length, rDesc.length)*5.2+12)
-        chk(h+2)
-        // Left cell
-        bx(ML,y,TW/2-2,h,2, i%4===0?mix(col,0.07):WHT)
-        fillRect(ML,y,2,h,mix(col,0.5))
-        sf(true,9.5,col); tx('v  '+cl(left[0]),ML+5,y+8)
-        sf(false,8.5,GRY); doc.text(lDesc,ML+5,y+14)
+        const h = Math.max(16, Math.max(lDesc.length, rDesc.length)*5.3+14)
+        chk(h+3)
+        // Left cell — WHITE bg, colored left border, colored title, grey desc
+        bx(ML,   y, TW/2-2, h, 2, WHT)
+        dr(BORDER); doc.setLineWidth(0.4)
+        doc.roundedRect(ML, y, TW/2-2, h, 2,2,'S')
+        fillRect(ML,y,3,h,col)
+        sf(true,10,col);  tx('v  '+cl(left[0]), ML+6, y+9)
+        sf(false,9,GRY);  doc.text(lDesc, ML+6, y+15)
         // Right cell
         if(right){
-          const rx=ML+TW/2+2
-          bx(rx,y,TW/2-2,h,2, i%4===0?mix(col,0.07):WHT)
-          fillRect(rx,y,2,h,mix(col,0.5))
-          sf(true,9.5,col); tx('v  '+cl(right[0]),rx+5,y+8)
-          sf(false,8.5,GRY); doc.text(rDesc,rx+5,y+14)
+          const rx = ML+TW/2+2
+          bx(rx, y, TW/2-2, h, 2, WHT)
+          dr(BORDER); doc.setLineWidth(0.4)
+          doc.roundedRect(rx, y, TW/2-2, h, 2,2,'S')
+          fillRect(rx,y,3,h,col)
+          sf(true,10,col);  tx('v  '+cl(right[0]), rx+6, y+9)
+          sf(false,9,GRY);  doc.text(rDesc, rx+6, y+15)
         }
-        y+=h+2
+        y+=h+3
       }
-      y+=4
+      y+=5
     })
   }
 
@@ -1186,12 +1192,12 @@ async function genererPDF(eleve, scores, classement, lang) {
   bx(ML,y-4,TW,6,0,WHT)
   secHdr(lang==='fr'?'Points forts':'Key strengths', cA)
 
-  // Table header — colored bg white text
+  // Table header
   chk(11)
   bx(ML,y,TW,10,2,cA)
   sf(true,10,WHT)
   tx(lang==='fr'?'Point fort':'Strength', ML+6,y+7)
-  tx(lang==='fr'?'Ce que ca signifie pour toi':'What it means', ML+TW*0.38,y+7)
+  tx(lang==='fr'?'Ce que ca signifie pour toi':'What it means for you', ML+TW*0.38,y+7)
   y+=12
 
   profA.forts.forEach(([fort,desc],i) => trow(fort,desc,cA,i%2===0))
