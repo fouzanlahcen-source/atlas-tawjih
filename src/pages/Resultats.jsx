@@ -1360,6 +1360,45 @@ export default function Resultats() {
           </div>
         </div>
 
+        {/* ── FEEDBACK OBLIGATOIRE ── */}
+        <div style={{ marginBottom:16 }}>
+          {/* Bannière d'alerte si pas encore rempli */}
+          {!feedbackDone && (
+            <div style={{ background:'linear-gradient(135deg,#FEF3C7,#FDE68A)', border:'2px solid #F59E0B', borderRadius:12, padding:'14px 18px', marginBottom:12, display:'flex', alignItems:'center', gap:12 }}>
+              <span style={{ fontSize:24, flexShrink:0 }}>⚠️</span>
+              <div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#92400E', marginBottom:2 }}>
+                  {lang==='fr' ? 'Merci de partager ton avis !' : 'Please share your feedback!'}
+                </div>
+                <div style={{ fontSize:11, color:'#B45309' }}>
+                  {lang==='fr'
+                    ? `${eleve?.prenom}, ton avis nous aide à améliorer Atlas Tawjih pour les prochains bacheliers. Remplis le formulaire ci-dessous en 30 secondes.`
+                    : `${eleve?.prenom}, your feedback helps us improve Atlas Tawjih for future students. Fill in the form below in 30 seconds.`}
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Badge succès si rempli */}
+          {feedbackDone && (
+            <div style={{ background:'#F0FDF4', border:'1.5px solid #86EFAC', borderRadius:12, padding:'12px 18px', marginBottom:12, display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:22 }}>✅</span>
+              <div style={{ fontSize:13, fontWeight:600, color:'#065F46' }}>
+                {lang==='fr' ? 'Merci pour ton feedback ! Bonne chance dans ton orientation.' : 'Thank you for your feedback! Good luck with your orientation.'}
+              </div>
+            </div>
+          )}
+          {/* Formulaire feedback */}
+          <div id="feedback-section">
+            <Feedback
+              lang={lang}
+              profilRiasec={profilDom.nom}
+              prenomEleve={eleve?.prenom || ''}
+              filiereEleve={eleve?.filiere || ''}
+              onValide={() => setFeedbackDone(true)}
+            />
+          </div>
+        </div>
+
         {/* REFAIRE */}
         <div style={{ textAlign:'center', marginBottom:24 }}>
           <button onClick={() => { sessionStorage.clear(); navigate('/') }} style={{ padding:'10px 20px', border:'1.5px solid #E2E8F0', borderRadius:8, background:'#fff', color:'#64748B', fontSize:13, cursor:'pointer' }}>
