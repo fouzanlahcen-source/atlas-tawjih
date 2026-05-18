@@ -1060,7 +1060,7 @@ export default function Resultats() {
             <div style={{ background:`linear-gradient(135deg,${DIM_COLORS[classement[0]]},${DIM_COLORS[classement[0]]}99)`, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:16 }}>🥇</span>
               <div>
-                <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?'PLAN A — PRIORITÉ':'PLAN A — PRIORITY'}</div>
+                <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?`PLAN A - PRIORITE`:`PLAN A - PRIORITY`}</div>
                 <div style={{ fontSize:13, color:'#fff', fontWeight:700 }}>{classement[0]} — {profilDom.nom} ({scores[classement[0]]}%)</div>
               </div>
             </div>
@@ -1120,7 +1120,7 @@ export default function Resultats() {
                 <div style={{ background:`linear-gradient(135deg,${colorB2},${colorB2}99)`, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
                   <span style={{ fontSize:16 }}>🥈</span>
                   <div>
-                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?'PLAN B — ALTERNATIVE':'PLAN B — ALTERNATIVE'}</div>
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?`PLAN B - ALTERNATIVE`:`PLAN B - ALTERNATIVE`}</div>
                     <div style={{ fontSize:13, color:'#fff', fontWeight:700 }}>{classement[1]} — {profB2.nom} ({scores[classement[1]]}%)</div>
                   </div>
                 </div>
@@ -1315,7 +1315,7 @@ export default function Resultats() {
                 {lang==='fr' ? `Contacter Atlas Tawjih` : `Contact Atlas Tawjih`}
               </div>
               <div style={{ fontSize:11, color:'#64748B', marginTop:2 }}>
-                {lang==='fr' ? 'Pour les recommandations d'établissements' : 'For school recommendations'}
+                {lang==='fr' ? `Pour les recommandations d'etablissements` : `For school recommendations`}
               </div>
             </div>
             <div style={{ textAlign:'right' }}>
@@ -1719,7 +1719,7 @@ export default function Resultats() {
             <div style={{ background:`linear-gradient(135deg,${DIM_COLORS[classement[0]]},${DIM_COLORS[classement[0]]}99)`, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:16 }}>🥇</span>
               <div>
-                <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?'PLAN A — PRIORITÉ':'PLAN A — PRIORITY'}</div>
+                <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?`PLAN A - PRIORITE`:`PLAN A - PRIORITY`}</div>
                 <div style={{ fontSize:13, color:'#fff', fontWeight:700 }}>{classement[0]} — {profilDom.nom} ({scores[classement[0]]}%)</div>
               </div>
             </div>
@@ -1779,7 +1779,7 @@ export default function Resultats() {
                 <div style={{ background:`linear-gradient(135deg,${colorB2},${colorB2}99)`, borderRadius:10, padding:'8px 16px', display:'flex', alignItems:'center', gap:8 }}>
                   <span style={{ fontSize:16 }}>🥈</span>
                   <div>
-                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?'PLAN B — ALTERNATIVE':'PLAN B — ALTERNATIVE'}</div>
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', fontWeight:600, letterSpacing:1 }}>{lang==='fr'?`PLAN B - ALTERNATIVE`:`PLAN B - ALTERNATIVE`}</div>
                     <div style={{ fontSize:13, color:'#fff', fontWeight:700 }}>{classement[1]} — {profB2.nom} ({scores[classement[1]]}%)</div>
                   </div>
                 </div>
@@ -1974,7 +1974,7 @@ export default function Resultats() {
                 {lang==='fr' ? `Contacter Atlas Tawjih` : `Contact Atlas Tawjih`}
               </div>
               <div style={{ fontSize:11, color:'#64748B', marginTop:2 }}>
-                {lang==='fr' ? 'Pour les recommandations d'établissements' : 'For school recommendations'}
+                {lang==='fr' ? `Pour les recommandations d'etablissements` : `For school recommendations`}
               </div>
             </div>
             <div style={{ textAlign:'right' }}>
