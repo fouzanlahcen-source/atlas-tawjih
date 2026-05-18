@@ -82,10 +82,12 @@ const ErrMsg = ({ msg }) => msg
   ? <div style={{ fontSize: 11, color: '#EF4444', marginTop: 3 }}>⚠ {msg}</div>
   : null
 
-export default function Feedback({ lang = 'fr', profilRiasec = '', onValide }) {
+export default function Feedback({ lang = 'fr', profilRiasec = '', prenomEleve = '', filiereEleve = '', onValide }) {
   const t = T[lang]
   const [type, setType]       = useState('')
   const [prenom, setPrenom]   = useState('')
+  // Pre-fill prenom if passed from parent
+  useEffect(() => { if(prenomEleve) setPrenom(prenomEleve) }, [prenomEleve])
   const [nomOrg, setNomOrg]   = useState('')
   const [ville, setVille]     = useState('')
   const [role, setRole]       = useState('')
@@ -120,10 +122,18 @@ export default function Feedback({ lang = 'fr', profilRiasec = '', onValide }) {
       type === 'eleve'  ? prenom :
       nomOrg
 
+    // Pour les élèves : envoyer le vrai prénom + la filière Bac
+    const profilEnvoye = type === 'eleve'
+      ? (filiereEleve || profilRiasec)
+      : (role || profilRiasec)
+
     await envoyerFeedback({
-      type, prenom: nomAffiche, ville,
-      profil: role || profilRiasec,
-      message, note,
+      type,
+      prenom: nomAffiche,
+      ville,
+      profil: profilEnvoye,
+      message,
+      note,
     })
     setLoading(false)
     setDone(true)
@@ -165,7 +175,7 @@ export default function Feedback({ lang = 'fr', profilRiasec = '', onValide }) {
       </div>
 
       {/* CHAMPS TUTEUR */}
-      {type === 'tuteur' && (
+      {(type === 'tuteur' || type === 'eleve') && (
         <div style={{ marginBottom: 12 }}>
           <Label>{t.prenom}</Label>
           <input value={prenom} onChange={e => { setPrenom(e.target.value); clrErr('prenom') }}

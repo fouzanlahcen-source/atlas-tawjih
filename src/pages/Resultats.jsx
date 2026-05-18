@@ -1677,6 +1677,8 @@ export default function Resultats() {
         <div id="feedback-section" style={{ marginBottom:16 }}>
           <Feedback
             lang={lang}
+            prenomEleve={eleve?.prenom || ""}
+            filiereEleve={eleve?.filiere || ""}
             profilRiasec={profilDom.nom}
             onValide={() => setFeedbackDone(true)}
           />
