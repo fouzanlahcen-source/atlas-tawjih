@@ -10,7 +10,8 @@ export const CODES_VALIDES = [
   'TAWJIH-01',
   'TAWJIH-02',
   'TAWJIH-03',
-  'MAROC-2025',
+  'TAWJIH-26',
+  'MAROC-2026',
   'BAC-ATLAS',
   'CENTRE-IDRAK',
   'ADMIN-TEST',   // jamais bloqué — pour tes tests internes
