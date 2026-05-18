@@ -114,9 +114,11 @@ export default function Feedback({ lang = 'fr', profilRiasec = '', onValide }) {
   const handleSubmit = async () => {
     if (!valider()) return
     setLoading(true)
+    // Utilise le vrai prénom pour tous les types
     const nomAffiche =
-      type === 'eleve' ? (lang === 'fr' ? 'Un élève' : 'A student') :
-      type === 'tuteur' ? prenom : nomOrg
+      type === 'tuteur' ? prenom :
+      type === 'eleve'  ? prenom :
+      nomOrg
 
     await envoyerFeedback({
       type, prenom: nomAffiche, ville,

@@ -276,40 +276,56 @@ export default function Accueil() {
         </section>
       )}
 
-      {/* ── FEEDBACKS ── */}
+      {/* ── FEEDBACKS CAROUSEL ── */}
       {feedbacks.length > 0 && (
-        <section style={{ padding: '48px 24px', background: 'linear-gradient(180deg,#F8FAFC,#fff)', borderBottom: '1px solid #E2E8F0' }}>
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#EDE9FE', border: '1px solid #DDD6FE', borderRadius: 20, padding: '4px 14px', marginBottom: 12 }}>
+        <section style={{ padding:'48px 24px', background:'linear-gradient(180deg,#F8FAFC,#fff)', borderBottom:'1px solid #E2E8F0', overflow:'hidden' }}>
+          <div style={{ textAlign:'center', marginBottom:32 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'#EDE9FE', border:'1px solid #DDD6FE', borderRadius:20, padding:'4px 14px', marginBottom:12 }}>
               <span>💬</span>
-              <span style={{ fontSize: 11, color: '#5B21B6', fontWeight: 600 }}>{lang === 'fr' ? 'TÉMOIGNAGES' : 'TESTIMONIALS'}</span>
+              <span style={{ fontSize:11, color:'#5B21B6', fontWeight:600 }}>{lang==='fr'?'TÉMOIGNAGES':'TESTIMONIALS'}</span>
             </div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1E293B', marginBottom: 6 }}>{t.feedback_title}</h2>
-            <p style={{ fontSize: 13, color: '#94A3B8' }}>{t.feedback_sub}</p>
+            <h2 style={{ fontSize:24, fontWeight:700, color:'#1E293B', marginBottom:6 }}>{t.feedback_title}</h2>
+            <p style={{ fontSize:13, color:'#94A3B8' }}>{t.feedback_sub}</p>
           </div>
 
-          {/* Grille ou carousel selon nombre */}
-          {feedbacks.length <= 3 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${feedbacks.length},1fr)`, gap: 16, maxWidth: 860, margin: '0 auto' }}>
-              {feedbacks.map((fb, i) => <FeedbackCard key={i} fb={fb} t={t} delay={i * 100} />)}
+          {/* Carte centrale unique — défilement un par un */}
+          <div style={{ maxWidth:520, margin:'0 auto', position:'relative' }}>
+            {/* Cartes fantômes derrière pour effet profondeur */}
+            <div style={{ position:'absolute', top:10, left:16, right:16, bottom:-10, background:'#EDE9FE', borderRadius:20, opacity:0.5, zIndex:0 }} />
+            <div style={{ position:'absolute', top:5, left:8, right:8, bottom:-5, background:'#DDD6FE', borderRadius:20, opacity:0.5, zIndex:1 }} />
+            {/* Carte principale */}
+            <div style={{ position:'relative', zIndex:2, animation:'fadeUp 0.4s ease both' }} key={fbIndex}>
+              <FeedbackCard fb={feedbacks[fbIndex]} t={t} />
             </div>
-          ) : (
-            <div style={{ maxWidth: 860, margin: '0 auto' }}>
-              {/* Carousel */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 20 }}>
-                {[0,1,2].map(offset => {
-                  const idx = (fbIndex + offset) % feedbacks.length
-                  return <FeedbackCard key={idx} fb={feedbacks[idx]} t={t} delay={offset * 80} />
-                })}
-              </div>
-              {/* Dots */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                {feedbacks.map((_, i) => (
-                  <div key={i} onClick={() => setFbIndex(i)} style={{ width: i === fbIndex ? 20 : 8, height: 8, borderRadius: 4, background: i === fbIndex ? '#7C3AED' : '#DDD6FE', cursor: 'pointer', transition: 'all 0.3s' }} />
-                ))}
-              </div>
+          </div>
+
+          {/* Contrôles navigation */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:16, marginTop:28 }}>
+            {/* Bouton précédent */}
+            <button onClick={() => setFbIndex(i => (i-1+feedbacks.length)%feedbacks.length)}
+              style={{ width:36, height:36, borderRadius:'50%', border:'1.5px solid #DDD6FE', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'#7C3AED', fontSize:16, transition:'all 0.2s' }}>
+              ←
+            </button>
+
+            {/* Dots */}
+            <div style={{ display:'flex', gap:6 }}>
+              {feedbacks.map((_,i) => (
+                <div key={i} onClick={() => setFbIndex(i)}
+                  style={{ width: i===fbIndex?24:8, height:8, borderRadius:4, background: i===fbIndex?'#7C3AED':'#DDD6FE', cursor:'pointer', transition:'all 0.3s' }} />
+              ))}
             </div>
-          )}
+
+            {/* Bouton suivant */}
+            <button onClick={() => setFbIndex(i => (i+1)%feedbacks.length)}
+              style={{ width:36, height:36, borderRadius:'50%', border:'1.5px solid #DDD6FE', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'#7C3AED', fontSize:16, transition:'all 0.2s' }}>
+              →
+            </button>
+          </div>
+
+          {/* Compteur */}
+          <div style={{ textAlign:'center', marginTop:12, fontSize:12, color:'#94A3B8' }}>
+            {fbIndex+1} / {feedbacks.length}
+          </div>
         </section>
       )}
 
@@ -339,36 +355,48 @@ export default function Accueil() {
 }
 
 // ── Composant carte feedback ───────────────────────────────
-function FeedbackCard({ fb, t, delay = 0 }) {
+function FeedbackCard({ fb, t }) {
   const stars = Number(fb.note) || 0
   const typeLabel = t.fb_types[fb.type] || fb.type
   const dimColor = { eleve:'#7C3AED', tuteur:'#059669', centre:'#2563EB', etablissement:'#D97706' }[fb.type] || '#7C3AED'
+  // Initiale pour l'avatar
+  const initiale = (fb.prenom || '?')[0].toUpperCase()
 
   return (
-    <div className="fb-card" style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', transition: 'all 0.2s', animationDelay: `${delay}ms`, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 42, height: 42, borderRadius: '50%', background: `linear-gradient(135deg,${dimColor},${dimColor}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-          {FB_ICONS[fb.type] || '👤'}
+    <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:20, padding:'28px 28px 24px', boxShadow:'0 4px 24px rgba(0,0,0,0.07)', display:'flex', flexDirection:'column', gap:16, minHeight:220, position:'relative', overflow:'hidden' }}>
+      {/* Accent coloré en haut */}
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:4, background:`linear-gradient(90deg,${dimColor},${dimColor}66)`, borderRadius:'20px 20px 0 0' }} />
+
+      {/* Header — avatar + nom + filière */}
+      <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+        <div style={{ width:50, height:50, borderRadius:'50%', background:`linear-gradient(135deg,${dimColor},${dimColor}88)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:800, color:'#fff', flexShrink:0, boxShadow:`0 4px 12px ${dimColor}40` }}>
+          {initiale}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fb.prenom}</div>
-          <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>
-            <span style={{ background: `${dimColor}18`, color: dimColor, padding: '1px 7px', borderRadius: 10, fontWeight: 600, fontSize: 10 }}>{typeLabel}</span>
-            {fb.ville && <span style={{ marginLeft: 5 }}>· {fb.ville}</span>}
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'#1E293B' }}>{fb.prenom}</div>
+          <div style={{ display:'flex', alignItems:'center', flexWrap:'wrap', gap:5, marginTop:3 }}>
+            <span style={{ background:`${dimColor}15`, color:dimColor, padding:'2px 8px', borderRadius:10, fontWeight:600, fontSize:10 }}>{typeLabel}</span>
+            {fb.profil && fb.type==='eleve' && (
+              <span style={{ background:'#F1F5F9', color:'#475569', padding:'2px 8px', borderRadius:10, fontSize:10, fontWeight:500 }}>📚 {fb.profil}</span>
+            )}
+            {fb.ville && (
+              <span style={{ fontSize:10, color:'#94A3B8' }}>📍 {fb.ville}</span>
+            )}
           </div>
         </div>
       </div>
+
       {/* Étoiles */}
-      <div style={{ display: 'flex', gap: 2 }}>
+      <div style={{ display:'flex', gap:3 }}>
         {[1,2,3,4,5].map(i => (
-          <span key={i} style={{ fontSize: 16, color: i <= stars ? '#F59E0B' : '#E2E8F0' }}>★</span>
+          <span key={i} style={{ fontSize:18, color: i<=stars ? '#F59E0B' : '#E2E8F0' }}>★</span>
         ))}
       </div>
+
       {/* Message */}
-      <p style={{ fontSize: 12, color: '#475569', lineHeight: 1.7, fontStyle: 'italic', margin: 0, borderLeft: `3px solid ${dimColor}`, paddingLeft: 10 }}>
+      <div style={{ fontSize:13, color:'#475569', lineHeight:1.75, fontStyle:'italic', borderLeft:`3px solid ${dimColor}`, paddingLeft:12, flex:1 }}>
         "{fb.message}"
-      </p>
+      </div>
     </div>
   )
 }
