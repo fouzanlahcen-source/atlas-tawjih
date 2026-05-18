@@ -885,19 +885,24 @@ async function genererPDF(eleve, scores, classement, lang) {
   const cA = RGB[classement[0]]
   const cB = RGB[classement[1]]
   const cC = RGB[classement[2]]
-  const DRK=[30,41,59], GRY=[71,85,105], LGT=[148,163,184]
-  const WHT=[255,255,255], RED=[239,68,68], AMB=[217,119,6]
-  const SLATE=[241,245,249], BORDER=[226,232,240]
 
-  const clp  = v => Math.min(255,Math.max(0,Math.round(v)))
-  const mix  = (c,w) => c.map(v=>clp(v*(1-w)+255*w))
-  const dark = (c,w) => c.map(v=>clp(v*(1-w)))
-  const hex2rgb = h => {
-    const r=parseInt(h.slice(1,3),16), g=parseInt(h.slice(3,5),16), b=parseInt(h.slice(5,7),16)
-    return [r,g,b]
-  }
+  // Fixed readable colors
+  const DRK  = [30,41,59]       // slate-900 — main text
+  const GRY  = [71,85,105]      // slate-600 — secondary text
+  const LGT  = [148,163,184]    // slate-400 — light text
+  const WHT  = [255,255,255]
+  const RED  = [239,68,68]
+  const AMB  = [217,119,6]
+  const SLATE_BG = [248,250,252]
+  const BORDER   = [226,232,240]
 
-  // ── Drawing helpers ──────────────────────────────────────
+  const clp = v => Math.min(255,Math.max(0,Math.round(v)))
+  // mix with white (opacity simulation)
+  const mix = (c,w) => c.map(v=>clp(v*(1-w)+255*w))
+  // darken
+  const drk = (c,w) => c.map(v=>clp(v*(1-w)))
+
+  // ── Core drawing ─────────────────────────────────────────
   const sf = (bold,size,col) => {
     doc.setFont('helvetica', bold?'bold':'normal')
     doc.setFontSize(size)
@@ -909,366 +914,373 @@ async function genererPDF(eleve, scores, classement, lang) {
     if(col) fl(col)
     doc.roundedRect(x,y,Math.max(0.5,w),Math.max(0.5,h),r||0,r||0,'F')
   }
-  const rect = (x,y,w,h,col) => { fl(col); doc.rect(x,y,w,h,'F') }
-  const line = (x1,y1,x2,y2,col,lw) => {
-    dr(col||BORDER); doc.setLineWidth(lw||0.4); doc.line(x1,y1,x2,y2)
-  }
+  const fillRect = (x,y,w,h,col) => { fl(col); doc.rect(x,y,Math.max(0.5,w),Math.max(0.5,h),'F') }
   const cl = s => String(s||'').replace(/[^\x00-\xFF \n]/g,'').trim()
   const tx = (s,x,y,al) => { const c=cl(s); if(c) doc.text(c,x,y,al?{align:al}:{}) }
-  const txw = (s,x,y,mw,lh) => {
+
+  // Print wrapped text, return new Y
+  const tw = (s,x,y,mw,lh) => {
     const c=cl(s); if(!c) return y
     const ls=doc.splitTextToSize(c,mw)
-    doc.text(ls,x,y); return y+ls.length*(lh||5.4)
+    doc.text(ls,x,y)
+    return y + ls.length*(lh||5.5)
   }
 
   // ── Page management ──────────────────────────────────────
-  let curPage=1, y=0
+  let page=1, y=0
 
-  const logoBar = () => {
-    // Dark top bar like page navbar
-    rect(0,0,W,13,DRK)
-    // AT logo box
+  const topBar = () => {
+    fillRect(0,0,W,13,DRK)
     bx(ML,1.8,10,9.5,2,cA)
     sf(true,7,WHT); tx('AT',ML+5,8.5,'center')
     sf(true,10,WHT); tx('ATLAS TAWJIH',ML+13,9)
     sf(false,7.5,LGT)
-    tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}  |  Code Holland : ${code3}`,W-MR,9,'right')
+    tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}  |  Code : ${code3}`,W-MR,9,'right')
   }
-
   const newPage = () => {
-    doc.addPage(); bx(0,0,W,H,0,WHT); logoBar(); curPage++; y=20
+    doc.addPage(); fillRect(0,0,W,H,WHT); topBar(); page++; y=20
   }
   const chk = n => { if(y+n>H-12) newPage() }
   const ftr = () => {
-    rect(0,H-10,W,10,DRK)
+    fillRect(0,H-10,W,10,DRK)
     sf(false,7.5,LGT)
     tx('Atlas Tawjih  |  atlastawjih.maroc@gmail.com',ML,H-4)
-    tx(`Page ${curPage}`,W-MR,H-4,'right')
+    tx(`Page ${page}`,W-MR,H-4,'right')
   }
 
-  // ── Section header — colored gradient band (like page headers) ──
+  // ── Section header — EXACTLY like web page section headers ──
+  // Dark background, white bold text, left accent
   const secHdr = (label, col) => {
     chk(16)
-    // Gradient-like: full color band
-    bx(ML,y,TW,11,3,col)
-    // Left accent bar (darker)
-    bx(ML,y,4,11,0,dark(col,0.2))
+    fillRect(ML,y,TW,11,col)
+    fillRect(ML,y,4,11,drk(col,0.2))
     sf(true,12,WHT); tx(label,ML+8,y+7.8)
     y+=15
   }
 
-  // ── Sub-section title with left bar (exactly like page web) ──
+  // ── Sub-header — colored left bar + colored bold text (like page) ──
   const subHdr = (label, col) => {
-    chk(12)
-    rect(ML,y,3,11,col)
+    chk(13)
+    fillRect(ML,y,3,11,col)
     sf(true,10.5,col); tx(label,ML+7,y+7.8)
     y+=14
   }
 
-  // ── Colored card with left border (like page cards) ──
+  // ── Text card — light bg + colored left border (like page cards) ──
+  // Text is ALWAYS dark for readability
   const card = (text, col) => {
     const c=cl(text)
-    const ls=doc.splitTextToSize(c,TW-10)
+    const ls=doc.splitTextToSize(c, TW-10)
     const h=ls.length*5.8+12
     chk(h+5)
-    bx(ML,y,TW,h,3,mix(col,0.93))
-    rect(ML,y,3,h,col)
-    sf(false,10,DRK); doc.text(ls,ML+8,y+8)
+    bx(ML,y,TW,h,3,mix(col,0.93))  // very light tinted bg
+    fillRect(ML,y,3,h,col)           // colored left border
+    sf(false,10,DRK)                 // DARK text — always readable
+    doc.text(ls,ML+8,y+8)
     y+=h+6
   }
 
-  // ── Pill/tag (like colored badges on page) ──
+  // ── Colored gradient card for profile desc (like the gradient card on page) ──
+  const gradCard = (label, text, col) => {
+    const ls=doc.splitTextToSize(cl(text), TW-8)
+    const h=ls.length*6+16
+    chk(h+4)
+    // Colored background (like the gradient hero on page)
+    bx(ML,y,TW,h,3,col)
+    // Label inside
+    sf(true,8,mix(col,0.35)); tx(label,ML+5,y+7)
+    // Text — WHITE on colored bg
+    sf(false,10,WHT); doc.text(ls,ML+5,y+12)
+    y+=h+6
+  }
+
+  // ── Pills/tags (like colored pills on page) ──
   const pills = (items, col) => {
     chk(10)
     let sx=ML, ry=y
     items.forEach(item => {
-      const s=cl(item)
-      if(!s) return
+      const s=cl(item); if(!s) return
       const sw=doc.getTextWidth(s)+10
-      if(sx+sw>W-MR){ sx=ML; ry+=8.5; chk(10) }
-      bx(sx,ry,sw,7,3,mix(col,0.88))
-      dr(mix(col,0.6)); doc.setLineWidth(0.3)
+      if(sx+sw>W-MR){ sx=ML; ry+=9; chk(10) }
+      // Light tinted background with colored border
+      bx(sx,ry,sw,7,3,mix(col,0.9))
+      dr(mix(col,0.55)); doc.setLineWidth(0.35)
       doc.roundedRect(sx,ry,sw,7,3,3,'FD')
-      sf(false,8.5,col); tx(s,sx+5,ry+5)
+      sf(false,8.5,drk(col,0.15))   // dark version of color — readable
+      tx(s,sx+5,ry+5)
       sx+=sw+4
     })
     y=ry+11
   }
 
-  // ── Table row alternating (like points forts table) ──
-  const trow = (col1,col2,col,even) => {
-    const ls=doc.splitTextToSize(cl(col2),TW*0.6-4)
-    const h=Math.max(11,ls.length*5.3+9)
+  // ── Table row — 2 cols with alternating bg (exactly like points forts) ──
+  const trow = (col1, col2, col, even) => {
+    const ls=doc.splitTextToSize(cl(col2), TW*0.60-4)
+    const h=Math.max(11, ls.length*5.3+9)
     chk(h+2)
-    bx(ML,y,TW,h,0,even?mix(col,0.08):WHT)
-    rect(ML,y,3,h,col)
+    // Alternating row bg
+    bx(ML,y,TW,h,0, even?mix(col,0.08):WHT)
+    // Left colored bar
+    fillRect(ML,y,3,h,col)
+    // Column 1 — bold colored text
     sf(true,9.5,col); tx(cl(col1),ML+6,y+h/2+1.5)
-    // Vertical separator
-    dr(mix(col,0.5)); doc.setLineWidth(0.25)
-    doc.line(ML+TW*0.37,y+2,ML+TW*0.37,y+h-2)
+    // Vertical separator line
+    dr(mix(col,0.4)); doc.setLineWidth(0.25)
+    doc.line(ML+TW*0.37, y+2, ML+TW*0.37, y+h-2)
+    // Column 2 — dark readable text
     sf(false,9,GRY); doc.text(ls,ML+TW*0.38,y+7)
     y+=h+1
   }
 
-  // ── Metier block with category header ──
+  // ── Plan header badge (like plan badges on page) ──
+  const planHdr = (line1, line2, score, col) => {
+    chk(26)
+    bx(ML,y,TW,24,3,col)
+    fillRect(ML,y,5,24,drk(col,0.25))
+    sf(true,8.5,mix(col,0.35)); tx(cl(line1),ML+9,y+8)
+    sf(true,15,WHT); tx(cl(line2),ML+9,y+19)
+    // Score badge top right
+    bx(W-MR-30,y+5,26,14,2,drk(col,0.2))
+    sf(true,7.5,WHT); tx('Score',W-MR-17,y+10,'center')
+    sf(true,13,WHT); tx(`${score}%`,W-MR-17,y+18,'center')
+    y+=29
+  }
+
+  // ── Metiers block — category + items grid ──
   const metBlock = (metiers, col) => {
     metiers.forEach(({cat,liste}) => {
       chk(14)
-      // Category header (like category badge on page)
-      bx(ML,y,TW,8,2,mix(col,0.88))
-      rect(ML,y,3,8,col)
-      sf(true,9.5,col); tx(cl(cat),ML+7,y+5.8)
+      // Category badge — colored bg, white text (readable)
+      bx(ML,y,TW,8,2,col)
+      fillRect(ML,y,3,8,drk(col,0.2))
+      sf(true,9.5,WHT); tx(cl(cat),ML+7,y+5.8)
       y+=10
-      liste.forEach(([nom,desc],i) => {
-        const dls=doc.splitTextToSize(cl(desc),TW-16)
-        const h=Math.max(12,dls.length*5.2+12)
+      // Items — 2 per row
+      for(let i=0;i<liste.length;i+=2){
+        const left  = liste[i]
+        const right = liste[i+1]
+        // Calculate max height for this row
+        const lDesc = doc.splitTextToSize(cl(left[1]), TW/2-14)
+        const rDesc = right ? doc.splitTextToSize(cl(right[1]), TW/2-14) : []
+        const h = Math.max(14, Math.max(lDesc.length, rDesc.length)*5.2+12)
         chk(h+2)
-        bx(ML+2,y,TW-2,h,2,i%2===0?mix(col,0.06):WHT)
-        rect(ML+2,y,2,h,mix(col,0.6))
-        sf(true,9.5,col); tx('v  '+cl(nom),ML+7,y+8)
-        sf(false,8.5,GRY); doc.text(dls,ML+7,y+14)
+        // Left cell
+        bx(ML,y,TW/2-2,h,2, i%4===0?mix(col,0.07):WHT)
+        fillRect(ML,y,2,h,mix(col,0.5))
+        sf(true,9.5,col); tx('v  '+cl(left[0]),ML+5,y+8)
+        sf(false,8.5,GRY); doc.text(lDesc,ML+5,y+14)
+        // Right cell
+        if(right){
+          const rx=ML+TW/2+2
+          bx(rx,y,TW/2-2,h,2, i%4===0?mix(col,0.07):WHT)
+          fillRect(rx,y,2,h,mix(col,0.5))
+          sf(true,9.5,col); tx('v  '+cl(right[0]),rx+5,y+8)
+          sf(false,8.5,GRY); doc.text(rDesc,rx+5,y+14)
+        }
         y+=h+2
-      })
-      y+=3
+      }
+      y+=4
     })
   }
 
-  // ── Eviter block (red, like page) ──
+  // ── Eviter blocks — red style like page ──
   const eviterBlock = (items) => {
     items.forEach(([titre,desc]) => {
-      const dls=doc.splitTextToSize(cl(desc),TW-14)
-      const h=dls.length*5.3+16
+      const ls=doc.splitTextToSize(cl(desc), TW-14)
+      const h=ls.length*5.3+16
       chk(h+4)
       bx(ML,y,TW,h,3,[254,242,242])
-      rect(ML,y,3,h,RED)
-      sf(true,10,RED); tx('x  '+cl(titre),ML+7,y+9)
-      sf(false,9,[127,29,29]); doc.text(dls,ML+7,y+15)
+      fillRect(ML,y,3,h,RED)
+      sf(true,10.5,RED); tx('x  '+cl(titre),ML+7,y+9)
+      sf(false,9,[127,29,29]); doc.text(ls,ML+7,y+15)
       y+=h+5
     })
   }
 
-  // ── Info row (like recap table) ──
+  // ── Info table row ──
   const infoRow = (label,value,col,even) => {
     const h=10; chk(h+1)
     bx(ML,y,TW,h,0,even?mix(col,0.08):WHT)
-    rect(ML,y,3,h,col)
+    fillRect(ML,y,3,h,col)
     sf(true,9.5,DRK); tx(cl(String(label)),ML+6,y+7)
     sf(false,9.5,GRY)
     const vls=doc.splitTextToSize(cl(String(value||'')),TW-52)
     doc.text(vls,ML+52,y+7); y+=h+1
   }
 
-  // ── Separator between plans ──
-  const sep = (label) => {
-    chk(14); y+=2
-    dr(BORDER); doc.setLineWidth(0.5)
-    doc.line(ML,y+4,W/2-26,y+4)
-    doc.line(W/2+26,y+4,W-MR,y+4)
-    bx(W/2-25,y,50,8,2,SLATE)
-    sf(true,7.5,GRY); tx(cl(label),W/2,y+5.8,'center')
-    y+=14
-  }
-
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
   // PAGE 1 — COUVERTURE
-  // ════════════════════════════════════════════════
-  bx(0,0,W,H,0,WHT)
+  // ════════════════════════════════
+  fillRect(0,0,W,H,WHT)
 
-  // Hero header — gradient band (like hero section on page)
-  bx(0,0,W,62,0,cA)
-  bx(0,0,W,62,0,dark(cA,0.05)) // slight darkening for depth
+  // Header gradient band
+  fillRect(0,0,W,62,cA)
 
-  // Logo AT box
+  // AT logo
   bx(ML,10,24,24,3,WHT)
   sf(true,13,cA); tx('AT',ML+12,25,'center')
   sf(true,21,WHT); tx('ATLAS TAWJIH',ML+30,20)
-  sf(false,9,mix(cA,0.5))
+  sf(false,9,mix(cA,0.45))
   tx(lang==='fr'?"Rapport d'Orientation RIASEC":'RIASEC Orientation Report',ML+30,28)
-  sf(false,8,mix(cA,0.45)); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),W-MR,18,'right')
+  sf(false,8,mix(cA,0.4)); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),W-MR,18,'right')
 
-  // Student info band inside header
-  bx(ML,38,TW,18,2,dark(cA,0.15))
+  // Student band
+  bx(ML,38,TW,18,2,drk(cA,0.15))
   sf(true,13,WHT); tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}`,ML+6,47)
-  sf(false,9,mix(cA,0.5)); tx(`${cl(eleve.filiere)}   |   ${cl(eleve.ville)}`,ML+6,54)
+  sf(false,9,mix(cA,0.45)); tx(`${cl(eleve.filiere)}   |   ${cl(eleve.ville)}`,ML+6,54)
 
-  y = 72
+  y=72
 
-  // ── Dominant profile card (like the big profil card on page) ──
+  // Profile dominant card
   bx(ML,y,TW,34,3,mix(cA,0.93))
-  // Left color accent
-  bx(ML,y,4,34,0,cA)
+  fillRect(ML,y,4,34,cA)
   // Letter circle
   bx(ML+8,y+6,22,22,11,cA)
   sf(true,14,WHT); tx(classement[0],ML+19,y+20,'center')
-  // Profile name
   sf(true,15,DRK); tx(cl(profA.nom),ML+36,y+14)
   sf(false,9,GRY); tx(lang==='fr'?'Profil dominant':'Dominant profile',ML+36,y+21)
   sf(true,13,cA); tx(code3,ML+36,y+29)
-  // Score badge (top right)
   bx(W-MR-28,y+7,24,20,3,cA)
   sf(true,15,WHT); tx(`${scores[classement[0]]}%`,W-MR-16,y+19,'center')
   sf(false,7.5,WHT); tx('score',W-MR-16,y+25,'center')
   y+=40
 
-  // ── RIASEC Scores bars (like on page) ──
-  subHdr(lang==='fr'?'Scores RIASEC':'RIASEC Scores',DRK)
+  // RIASEC score bars
+  subHdr(lang==='fr'?'Scores RIASEC':'RIASEC Scores', DRK)
   classement.forEach((dim,i) => {
     const sc=scores[dim], cc=RGB[dim], pn=cl(PROFILS[dim][lang].nom)
     chk(11)
     sf(true,9.5,cc); tx(dim,ML,y+4)
     sf(false,9,GRY); tx(pn,ML+9,y+4)
-    // Bar background
     bx(ML+56,y,90,6,2,BORDER)
-    // Bar value
     bx(ML+56,y,Math.max(1,90*sc/100),6,2,cc)
     sf(true,9.5,cc); tx(`${sc}%`,ML+150,y+4.5)
-    const med=['🥇','🥈','🥉']
-    if(i<3){ sf(true,9,DRK); tx(med[i].replace(/[^\x00-\xFF]/g,'['+['A','B','C'][i]+']'),ML+160,y+4.5) }
+    const med=['[A]','[B]','[C]']
+    if(i<3){ sf(true,9,DRK); tx(med[i],ML+160,y+4.5) }
     y+=10
   })
   y+=4
 
-  // ── Profile description (colored gradient card like page) ──
-  chk(30)
-  bx(ML,y,TW,11,2,cA)
-  sf(true,9.5,mix(cA,0.3)); tx(lang==='fr'?'PROFIL EN DETAIL':'PROFILE IN DETAIL',ML+5,y+7.5)
-  y+=13
-  card(profA.desc, cA)
+  // Profile description — colored gradient card (like page)
+  gradCard(lang==='fr'?'PROFIL EN DETAIL':'PROFILE IN DETAIL', profA.desc, cA)
 
-  // ── Tu seras bon dans (pills) ──
+  // Tu seras bon dans — pills
   if(profA.bonsEn && profA.bonsEn.length>0){
-    subHdr(lang==='fr'?'Tu seras tres bon dans':'You will excel in',cA)
-    pills(profA.bonsEn,cA)
+    // White card container (like page)
+    chk(40)
+    const beforeY=y
+    subHdr(lang==='fr'?'Tu seras tres bon dans':'You will excel in', cA)
+    pills(profA.bonsEn, cA)
+    // Draw border around the whole section
+    dr(BORDER); doc.setLineWidth(0.4)
+    doc.roundedRect(ML,beforeY-2,TW,y-beforeY+4,3,3,'S')
   }
 
   ftr()
 
-  // ════════════════════════════════════════════════
-  // PAGE 2 — POINTS FORTS (table like page)
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
+  // PAGE 2 — POINTS FORTS
+  // ════════════════════════════════
   newPage()
-  secHdr(lang==='fr'?'Points forts':'Key strengths',cA)
+  // White card container
+  bx(ML,y-4,TW,6,0,WHT)
+  secHdr(lang==='fr'?'Points forts':'Key strengths', cA)
 
-  // Table header
+  // Table header — colored bg white text
   chk(11)
   bx(ML,y,TW,10,2,cA)
   sf(true,10,WHT)
-  tx(lang==='fr'?'Point fort':'Strength',ML+6,y+7)
-  tx(lang==='fr'?'Ce que ca signifie pour toi':'What it means for you',ML+TW*0.38,y+7)
+  tx(lang==='fr'?'Point fort':'Strength', ML+6,y+7)
+  tx(lang==='fr'?'Ce que ca signifie pour toi':'What it means', ML+TW*0.38,y+7)
   y+=12
 
   profA.forts.forEach(([fort,desc],i) => trow(fort,desc,cA,i%2===0))
   y+=6
-
   ftr()
 
-  // ════════════════════════════════════════════════
-  // PAGE 3 — PLAN A (full page like page web)
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
+  // PAGE 3+ — PLAN A
+  // ════════════════════════════════
   newPage()
-  // Big plan header (like plan badge on page)
-  bx(ML,y,TW,24,3,cA)
-  bx(ML,y,5,24,0,dark(cA,0.25))
-  sf(true,8.5,mix(cA,0.35))
-  tx(lang==='fr'?'PLAN A   -   PROFIL DOMINANT   -   PRIORITE':'PLAN A   -   DOMINANT PROFILE   -   PRIORITY',ML+9,y+8)
-  sf(true,16,WHT); tx(`${classement[0]}  -  ${cl(profA.nom)}  (${scores[classement[0]]}%)`,ML+9,y+19)
-  // Score badge
-  bx(W-MR-30,y+5,26,14,2,dark(cA,0.2))
-  sf(true,8,WHT); tx('Score',W-MR-17,y+11,'center')
-  sf(true,13,WHT); tx(`${scores[classement[0]]}%`,W-MR-17,y+19,'center')
-  y+=29
-
-  // Domaines (pills like page)
-  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco',cA)
-  pills(profA.domaines,cA)
-
-  // Metiers with categories (like page)
-  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers',cA)
-  metBlock(profA.metiers,cA)
+  planHdr(
+    lang==='fr'?'PLAN A   -   PROFIL DOMINANT   -   PRIORITE':'PLAN A   -   DOMINANT PROFILE   -   PRIORITY',
+    `${classement[0]}  -  ${cl(profA.nom)}  (${scores[classement[0]]}%)`,
+    scores[classement[0]], cA
+  )
+  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco', cA)
+  pills(profA.domaines, cA)
+  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers', cA)
+  metBlock(profA.metiers, cA)
   ftr()
 
-  // ════════════════════════════════════════════════
-  // PAGE 4 — PLAN B
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
+  // PAGE — PLAN B
+  // ════════════════════════════════
   newPage()
-  bx(ML,y,TW,24,3,cB)
-  bx(ML,y,5,24,0,dark(cB,0.25))
-  sf(true,8.5,mix(cB,0.35))
-  tx(lang==='fr'?'PLAN B   -   PROFIL SECONDAIRE   -   ALTERNATIVE':'PLAN B   -   SECONDARY PROFILE   -   ALTERNATIVE',ML+9,y+8)
-  sf(true,16,WHT); tx(`${classement[1]}  -  ${cl(profB.nom)}  (${scores[classement[1]]}%)`,ML+9,y+19)
-  bx(W-MR-30,y+5,26,14,2,dark(cB,0.2))
-  sf(true,8,WHT); tx('Score',W-MR-17,y+11,'center')
-  sf(true,13,WHT); tx(`${scores[classement[1]]}%`,W-MR-17,y+19,'center')
-  y+=29
-  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco',cB)
-  pills(profB.domaines,cB)
-  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers',cB)
-  metBlock(profB.metiers,cB)
+  planHdr(
+    lang==='fr'?'PLAN B   -   PROFIL SECONDAIRE   -   ALTERNATIVE':'PLAN B   -   SECONDARY PROFILE   -   ALTERNATIVE',
+    `${classement[1]}  -  ${cl(profB.nom)}  (${scores[classement[1]]}%)`,
+    scores[classement[1]], cB
+  )
+  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco', cB)
+  pills(profB.domaines, cB)
+  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers', cB)
+  metBlock(profB.metiers, cB)
   ftr()
 
-  // ════════════════════════════════════════════════
-  // PAGE 5 — PLAN C
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
+  // PAGE — PLAN C
+  // ════════════════════════════════
   newPage()
-  bx(ML,y,TW,24,3,cC)
-  bx(ML,y,5,24,0,dark(cC,0.25))
-  sf(true,8.5,mix(cC,0.35))
-  tx(lang==='fr'?'PLAN C   -   PROFIL TERTIAIRE   -   OPTION DE REPLI':'PLAN C   -   TERTIARY PROFILE   -   BACKUP OPTION',ML+9,y+8)
-  sf(true,16,WHT); tx(`${classement[2]}  -  ${cl(profC.nom)}  (${scores[classement[2]]}%)`,ML+9,y+19)
-  bx(W-MR-30,y+5,26,14,2,dark(cC,0.2))
-  sf(true,8,WHT); tx('Score',W-MR-17,y+11,'center')
-  sf(true,13,WHT); tx(`${scores[classement[2]]}%`,W-MR-17,y+19,'center')
-  y+=29
-  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco',cC)
-  pills(profC.domaines,cC)
-  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers',cC)
-  metBlock(profC.metiers,cC)
+  planHdr(
+    lang==='fr'?'PLAN C   -   PROFIL TERTIAIRE   -   OPTION DE REPLI':'PLAN C   -   TERTIARY PROFILE   -   BACKUP OPTION',
+    `${classement[2]}  -  ${cl(profC.nom)}  (${scores[classement[2]]}%)`,
+    scores[classement[2]], cC
+  )
+  subHdr(lang==='fr'?"Domaines d'etudes au Maroc":'Fields of study in Morocco', cC)
+  pills(profC.domaines, cC)
+  subHdr(lang==='fr'?'Metiers recommandes':'Recommended careers', cC)
+  metBlock(profC.metiers, cC)
   ftr()
 
-  // ════════════════════════════════════════════════
-  // PAGE 6 — ENVIRONNEMENT & CONSEILS
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
+  // PAGE — ENVIRONNEMENT & CONSEILS
+  // ════════════════════════════════
   newPage()
-  secHdr(lang==='fr'?'Environnement et Conseils':'Environment and Advice',cA)
+  secHdr(lang==='fr'?'Environnement et Conseils':'Environment and Advice', cA)
 
-  // Environnement idéal — colored card
-  subHdr(lang==='fr'?'Environnement de travail ideal':'Ideal work environment',cA)
+  subHdr(lang==='fr'?'Environnement de travail ideal':'Ideal work environment', cA)
   card(profA.env, cA)
 
-  // Lieux adaptés — pills
   if(profA.envIdeal && profA.envIdeal.length>0){
-    subHdr(lang==='fr'?'Lieux qui te correspondent':'Environments that suit you',cA)
-    pills(profA.envIdeal,cA)
+    subHdr(lang==='fr'?'Lieux qui te correspondent':'Environments that suit you', cA)
+    pills(profA.envIdeal, cA)
   }
 
-  // A éviter — red blocks
   if(profA.eviter && profA.eviter.length>0){
-    subHdr(lang==='fr'?'A eviter':'To avoid',RED)
+    subHdr(lang==='fr'?'A eviter':'To avoid', RED)
     eviterBlock(profA.eviter)
   }
 
-  // Message personnel
-  subHdr(lang==='fr'?'Message personnel':'Personal message',cA)
+  subHdr(lang==='fr'?'Message personnel':'Personal message', cA)
   const motiv = lang==='fr'
     ? `${cl(eleve.prenom)}, ce rapport est un point de depart, pas un verdict definitif. Ton profil ${cl(profA.nom)} est un veritable atout. Fais confiance a tes forces naturelles et construis ton avenir avec passion et determination !`
     : `${cl(eleve.prenom)}, this report is a starting point, not a final verdict. Your ${cl(profA.nom)} profile is a real asset. Trust your natural strengths and build your future with passion!`
   card(motiv, cA)
   ftr()
 
-  // ════════════════════════════════════════════════
-  // PAGE 7 — NOTE PARENTS
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
+  // PAGE — NOTE PARENTS
+  // ════════════════════════════════
   newPage()
-  secHdr(lang==='fr'?'Note pour les parents':'Note for parents',AMB)
+  secHdr(lang==='fr'?'Note pour les parents':'Note for parents', AMB)
 
-  // Main note — amber card
   const parentNote = lang==='fr'
     ? `Chers parents,\n\nVotre enfant ${cl(eleve.prenom)} a un profil ${cl(profA.nom)} dominant (${scores[classement[0]]}%). Ce resultat est une base de reflexion, pas un verdict definitif. Ce rapport ouvre des pistes, il ne ferme pas de portes.\n\nNous vous recommandons d'explorer ensemble les domaines compatibles listes dans ce rapport. Les recommandations d'etablissements seront communiquees par l'equipe Atlas Tawjih selon la situation, la mobilite et les preferences de votre enfant.`
-    : `Dear parents,\n\nYour child ${cl(eleve.prenom)} has a dominant ${cl(profA.nom)} profile (${scores[classement[0]]}%). This result is a basis for reflection, not a final verdict. This report opens paths, it does not close doors.\n\nWe recommend exploring compatible fields together. Institution recommendations will be provided by the Atlas Tawjih team based on your child's situation, mobility and preferences.`
+    : `Dear parents,\n\nYour child ${cl(eleve.prenom)} has a dominant ${cl(profA.nom)} profile (${scores[classement[0]]}%). This result is a basis for reflection, not a final verdict. This report opens paths, it does not close doors.\n\nWe recommend exploring compatible fields together. Institution recommendations will be provided by the Atlas Tawjih team.`
   card(parentNote, AMB)
 
-  // Conseils parents — table
-  subHdr(lang==='fr'?'Comment accompagner votre enfant':'How to support your child',AMB)
+  subHdr(lang==='fr'?'Comment accompagner votre enfant':'How to support your child', AMB)
   const cpFr=[
     [`Ne pas imposer`,`Laissez votre enfant explorer ses interets naturels sans imposer de filiere.`],
     [`Valoriser les interets`,`Soutenez ses passions meme si elles semblent inhabituelles.`],
@@ -1278,74 +1290,71 @@ async function genererPDF(eleve, scores, classement, lang) {
   ]
   const cpEn=[
     [`Do not impose`,`Let your child explore their natural interests without imposing a field.`],
-    [`Value interests`,`Support their passions even if unusual. This is their main strength.`],
+    [`Value interests`,`Support their passions even if unusual.`],
     [`Offer resources`,`Books, internships, career visits: everything builds their project.`],
     [`Respect autonomy`,`They need space to think and build their project at their own pace.`],
     [`Contact Atlas Tawjih`,`Our team supports your child through their entire orientation journey.`],
   ]
-  const cp = lang==='fr' ? cpFr : cpEn
-  cp.forEach(([t,d],i) => trow(t,d,AMB,i%2===0))
+  ;(lang==='fr'?cpFr:cpEn).forEach(([t,d],i) => trow(t,d,AMB,i%2===0))
   ftr()
 
-  // ════════════════════════════════════════════════
-  // PAGE 8 — RECAP + SIGNATURE
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════
+  // PAGE — RECAP + SIGNATURE
+  // ════════════════════════════════
   newPage()
-  secHdr(lang==='fr'?'Recapitulatif':'Summary',DRK)
+  secHdr(lang==='fr'?'Recapitulatif':'Summary', DRK)
 
-  // Infos élève
-  subHdr(lang==='fr'?"Informations de l'eleve":'Student information',cA)
+  subHdr(lang==='fr'?"Informations de l'eleve":'Student information', cA)
   const mobVal = eleve.mobilite==='oui'
     ? (lang==='fr'?'Oui - toute ville':'Yes - any city')
     : eleve.mobilite==='non'
       ? (lang==='fr'?'Non':'No')
       : (lang==='fr'?'Certaines villes':'Certain cities')
   const privVal = eleve.prive==='oui'?(lang==='fr'?'Oui':'Yes'):(lang==='fr'?'Non':'No')
-  const rows=[
+  ;[
     [lang==='fr'?'Nom complet':'Full name', `${cl(eleve.prenom)} ${cl(eleve.nom)}`],
-    [lang==='fr'?'Filiere Bac':'Field', cl(eleve.filiere)],
-    ['Ville', cl(eleve.ville)],
-    [lang==='fr'?'Mobilite':'Mobility', mobVal],
-    [lang==='fr'?'Ecoles privees':'Private', privVal],
-    [lang==='fr'?'Date':'Date', new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US')],
-    ['Code Holland', `${code3}  -  ${cl(profA.nom)} / ${cl(profB.nom)} / ${cl(profC.nom)}`],
-  ]
-  rows.forEach(([k,v],i) => infoRow(k,v,cA,i%2===0))
+    [lang==='fr'?'Filiere Bac':'Field',     cl(eleve.filiere)],
+    ['Ville',                               cl(eleve.ville)],
+    [lang==='fr'?'Mobilite':'Mobility',     mobVal],
+    [lang==='fr'?'Prive':'Private',         privVal],
+    [lang==='fr'?'Date':'Date',             new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US')],
+    ['Code Holland',                        `${code3}  -  ${cl(profA.nom)} / ${cl(profB.nom)} / ${cl(profC.nom)}`],
+  ].forEach(([k,v],i) => infoRow(k,v,cA,i%2===0))
   y+=8
 
-  // Bar chart 6 scores
-  subHdr(lang==='fr'?'Tes 6 scores RIASEC':'Your 6 RIASEC scores',cA)
+  // Bar chart — 6 scores
+  subHdr(lang==='fr'?'Tes 6 scores RIASEC':'Your 6 RIASEC scores', cA)
   const bW=26, bMH=40, bGap=5, bSX=ML+8, bBY=y+bMH+8
   Object.entries(scores).forEach(([dim,sc],i)=>{
     const bh=Math.max(2,(sc/100)*bMH), bx2=bSX+i*(bW+bGap), by2=bBY-bh, cc=RGB[dim]
-    bx(bx2,bBY-bMH,bW,bMH,2,BORDER)
-    bx(bx2,by2,bW,bh,2,cc)
+    bx(bx2,bBY-bMH,bW,bMH,2,BORDER)     // grey bg bar
+    bx(bx2,by2,bW,bh,2,cc)              // colored value bar
     sf(true,9,cc); tx(`${sc}%`,bx2+bW/2,by2-2,'center')
     sf(true,10,DRK); tx(dim,bx2+bW/2,bBY+5,'center')
     sf(false,7.5,GRY)
-    const pn=cl(PROFILS[dim][lang].nom)
-    doc.splitTextToSize(pn,bW+2).forEach((l,li)=>tx(l,bx2+bW/2,bBY+10+li*4.5,'center'))
+    doc.splitTextToSize(cl(PROFILS[dim][lang].nom),bW+2)
+      .forEach((l,li) => tx(l,bx2+bW/2,bBY+10+li*4.5,'center'))
   })
   y=bBY+22
 
   // A propos
-  subHdr('Atlas Tawjih',cA)
-  const about = lang==='fr'
+  subHdr('Atlas Tawjih', cA)
+  card(lang==='fr'
     ? `Atlas Tawjih est une plateforme d'orientation dediee aux bacheliers marocains. Notre mission : aider chaque eleve a decouvrir son profil et s'orienter vers la filiere qui lui correspond. Nous gerons les candidatures aux ecoles et bourses avec un suivi national jusqu'a la fin du parcours.`
     : `Atlas Tawjih is an orientation platform for Moroccan students. We help every student discover their profile and find the right field. We handle applications to schools and scholarships with full national follow-up.`
-  card(about, cA)
+  , cA)
 
   // Signature
-  chk(32)
+  chk(30)
   dr(BORDER); doc.setLineWidth(0.8); doc.line(ML,y,W-MR,y); y+=8
   sf(false,9,GRY)
   tx(lang==='fr'?'Certifie par':'Certified by',ML,y)
-  tx(lang==='fr'?'Cachet':'Stamp',W/2,y); y+=6
+  tx(lang==='fr'?'Cachet':'Stamp',W/2,y); y+=7
   sf(true,13,DRK); tx('Atlas Tawjih',ML,y)
   sf(false,8.5,GRY); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),ML,y+8)
   bx(W/2,y-5,TW/2,26,3,cA)
-  sf(true,14,WHT); tx('ATLAS TAWJIH',W/2+TW/4,y+8,'center')
-  sf(false,9,mix(cA,0.5)); tx('atlastawjih.maroc@gmail.com',W/2+TW/4,y+15,'center')
+  sf(true,13,WHT); tx('ATLAS TAWJIH',W/2+TW/4,y+7,'center')
+  sf(false,9,mix(cA,0.4)); tx('atlastawjih.maroc@gmail.com',W/2+TW/4,y+14,'center')
   ftr()
 
   doc.save(`AtlasTawjih_${cl(eleve.prenom)}_${cl(eleve.nom)}_${code3}.pdf`)
