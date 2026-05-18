@@ -830,6 +830,8 @@ const DIM_COLORS = {
   R:'#EF4444', I:'#3B82F6', A:'#8B5CF6',
   S:'#10B981', E:'#F59E0B', C:'#06B6D4',
 }
+const AMB_COLOR = '#D97706'
+
 const DIM_BG = {
   R:'#FEF2F2', I:'#EFF6FF', A:'#F5F3FF',
   S:'#F0FDF4', E:'#FFFBEB', C:'#ECFEFF',
@@ -1199,6 +1201,61 @@ export default function Resultats() {
             profilRiasec={profilDom.nom}
             onValide={() => setFeedbackDone(true)}
           />
+        </div>
+
+        {/* ── NOTE PARENTS ── */}
+        <div style={{ marginBottom:14 }}>
+          {/* Header */}
+          <div style={{ background:AMB_COLOR, borderRadius:'12px 12px 0 0', padding:'14px 18px' }}>
+            <span style={{ fontSize:13, fontWeight:700, color:'#fff' }}>
+              {lang==='fr' ? '👨‍👩‍👧 Note pour les parents' : '👨‍👩‍👧 Note for parents'}
+            </span>
+          </div>
+          {/* Note principale */}
+          <div style={{ background:'#FFFBEB', border:'1px solid #FDE68A', borderTop:'none', borderRadius:'0 0 0 0', padding:'18px 20px' }}>
+            <div style={{ fontSize:12, color:'#78350F', lineHeight:1.9 }}>
+              {lang==='fr'
+                ? `Chers parents,
+
+Votre enfant ${eleve?.prenom} a un profil ${profilDom.nom} dominant (${scores[classement[0]]}%). Ce resultat est une base de reflexion, pas un verdict definitif. Ce rapport ouvre des pistes, il ne ferme pas de portes.
+
+Nous vous recommandons d'explorer ensemble les domaines compatibles listes dans ce rapport. Les recommandations d'etablissements seront communiquees par l'equipe Atlas Tawjih selon la situation, la mobilite et les preferences de votre enfant.`
+                : `Dear parents,
+
+Your child ${eleve?.prenom} has a dominant ${profilDom.nom} profile (${scores[classement[0]]}%). This result is a basis for reflection, not a final verdict. This report opens paths, it does not close doors.
+
+We recommend exploring compatible fields together. Institution recommendations will be provided by the Atlas Tawjih team.`
+              }
+            </div>
+          </div>
+          {/* Comment accompagner */}
+          <div style={{ background:'#fff', border:'1px solid #FDE68A', borderTop:'none', borderRadius:'0 0 0 0', padding:'14px 18px' }}>
+            <div style={{ fontSize:12, fontWeight:700, color:AMB_COLOR, marginBottom:10, display:'flex', alignItems:'center', gap:6 }}>
+              <span style={{ width:3, height:14, background:AMB_COLOR, borderRadius:2, display:'inline-block' }}></span>
+              {lang==='fr' ? 'Comment accompagner votre enfant' : 'How to support your child'}
+            </div>
+            {(lang==='fr' ? [
+              [`Ne pas imposer`,`Laissez votre enfant explorer ses interets naturels sans imposer de filiere.`],
+              [`Valoriser les interets`,`Soutenez ses passions meme si elles semblent inhabituelles.`],
+              [`Offrir des ressources`,`Livres, stages, visites de metiers : tout ce qui nourrit son projet est utile.`],
+              [`Respecter l'autonomie`,`Il a besoin d'espace pour reflechir et construire son projet a son rythme.`],
+              [`Contacter Atlas Tawjih`,`Notre equipe accompagne votre enfant dans ses demarches d'orientation.`],
+            ] : [
+              [`Do not impose`,`Let your child explore natural interests without imposing a field.`],
+              [`Value interests`,`Support their passions even if unusual.`],
+              [`Offer resources`,`Books, internships, visits: everything builds their project.`],
+              [`Respect autonomy`,`They need space to think and build their project.`],
+              [`Contact Atlas Tawjih`,`Our team supports your child through their orientation journey.`],
+            ]).map(([titre,desc],i) => (
+              <div key={i} style={{ display:'grid', gridTemplateColumns:'180px 1fr', borderTop: i===0 ? '1px solid #FDE68A' : '1px solid #FEF3C7', padding:'10px 0' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ width:3, height:'100%', minHeight:16, background:AMB_COLOR, borderRadius:2, display:'inline-block', flexShrink:0 }}></span>
+                  <span style={{ fontSize:12, fontWeight:700, color:AMB_COLOR }}>{titre}</span>
+                </div>
+                <span style={{ fontSize:12, color:'#64748B', paddingLeft:8 }}>{desc}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
 
