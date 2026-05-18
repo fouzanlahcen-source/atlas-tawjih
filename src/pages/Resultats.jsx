@@ -1380,10 +1380,15 @@ export default function Resultats() {
           )}
           {/* Badge succès si rempli */}
           {feedbackDone && (
-            <div style={{ background:'#F0FDF4', border:'1.5px solid #86EFAC', borderRadius:12, padding:'12px 18px', marginBottom:12, display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:22 }}>✅</span>
-              <div style={{ fontSize:13, fontWeight:600, color:'#065F46' }}>
-                {lang==='fr' ? 'Merci pour ton feedback ! Bonne chance dans ton orientation.' : 'Thank you for your feedback! Good luck with your orientation.'}
+            <div style={{ background:'#F0FDF4', border:'1.5px solid #86EFAC', borderRadius:12, padding:'14px 18px', marginBottom:12, display:'flex', alignItems:'center', gap:12 }}>
+              <span style={{ fontSize:28 }}>✅</span>
+              <div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#065F46', marginBottom:2 }}>
+                  {lang==='fr' ? 'Merci pour ton feedback !' : 'Thank you for your feedback!'}
+                </div>
+                <div style={{ fontSize:12, color:'#059669' }}>
+                  {lang==='fr' ? 'Bonne chance dans ton orientation !' : 'Good luck with your orientation!'}
+                </div>
               </div>
             </div>
           )}
