@@ -868,493 +868,6 @@ function getClassement(scores) {
 // ══════════════════════════════════════════════════════════
 // GÉNÉRATION PDF avec jsPDF
 // ══════════════════════════════════════════════════════════
-async function genererPDF(eleve, scores, classement, lang) {
-  const { jsPDF } = await import('jspdf')
-  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' })
-  const W=210, H=297, ML=16, MR=16, TW=W-ML-MR
-
-  const profA=PROFILS[classement[0]][lang]
-  const profB=PROFILS[classement[1]][lang]
-  const profC=PROFILS[classement[2]][lang]
-  const code3=classement[0]+classement[1]+classement[2]
-
-  const RGB={R:[239,68,68],I:[59,130,246],A:[139,92,246],S:[16,185,129],E:[245,158,11],C:[6,182,212]}
-  const cA=RGB[classement[0]], cB=RGB[classement[1]], cC=RGB[classement[2]]
-  const DRK=[30,41,59], GRY=[71,85,105], LGT=[148,163,184], WHT=[255,255,255]
-  const RED=[220,38,38], REDBG=[254,242,242], BORDER=[226,232,240], LIGHT=[248,250,252]
-  const AMB=[217,119,6], AMBBG=[255,251,235]
-
-  const clp=v=>Math.min(255,Math.max(0,Math.round(v)))
-  const mix=(c,w)=>c.map(v=>clp(v*(1-w)+255*w))
-  const drk=(c,w)=>c.map(v=>clp(v*(1-w)))
-
-  const sf=(bold,size,col)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(col[0],col[1],col[2])}
-  const fl=col=>doc.setFillColor(col[0],col[1],col[2])
-  const dr=col=>doc.setDrawColor(col[0],col[1],col[2])
-  const bx=(x,y,w,h,r,col)=>{if(col)fl(col);doc.roundedRect(x,y,Math.max(0.5,w),Math.max(0.5,h),r||0,r||0,'F')}
-  const fr=(x,y,w,h,col)=>{fl(col);doc.rect(x,y,Math.max(0.5,w),Math.max(0.5,h),'F')}
-  const brd=(x,y,w,h,r,col,lw)=>{dr(col||BORDER);doc.setLineWidth(lw||0.4);doc.roundedRect(x,y,w,h,r||3,r||3,'S')}
-  const cl=s=>String(s||'').replace(/[^\x00-\xFF \n]/g,'').trim()
-  const tx=(s,x,y,al)=>{const c=cl(s);if(c)doc.text(c,x,y,al?{align:al}:{})}
-
-  let pg=1, y=0
-
-  // ── Top bar ─────────────────────────────────────────────
-  const topBar=()=>{
-    fr(0,0,W,14,DRK)
-    bx(ML,2,12,10,2,cA)
-    sf(true,7,WHT); tx('AT',ML+6,9,'center')
-    sf(true,10,WHT); tx('ATLAS TAWJIH',ML+16,9.5)
-    sf(false,7.5,LGT); tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}  |  Code : ${code3}`,W-MR,9.5,'right')
-  }
-  const ftr=()=>{
-    fr(0,H-11,W,11,DRK)
-    sf(false,7.5,LGT); tx('Atlas Tawjih  |  atlastawjih.maroc@gmail.com',ML,H-4.5)
-    sf(true,8.5,WHT); tx(`${pg}`,W-MR,H-4.5,'right')
-  }
-  const newPg=()=>{doc.addPage();bx(0,0,W,H,0,WHT);topBar();pg++;y=22}
-  const chk=n=>{if(y+n>H-13)newPg()}
-
-  // ── Helpers identiques à la page web ───────────────────
-
-  // Titre de section avec barre latérale gauche colorée
-  const secTitle=(label,col)=>{
-    chk(14); fr(ML,y,3,11,col)
-    sf(true,12,col); tx(label,ML+7,y+8.5); y+=15
-  }
-
-  // Bloc gradient coloré (comme "Profil en détail" sur la page)
-  const gradBloc=(sublabel,text,col)=>{
-    const ls=doc.splitTextToSize(cl(text),TW-10), h=ls.length*6.2+16
-    chk(h+4)
-    bx(ML,y,TW,h,4,col)
-    sf(true,7.5,mix(col,0.3)); tx(sublabel,ML+6,y+6)
-    sf(false,10.5,WHT); doc.text(ls,ML+6,y+12)
-    y+=h+6
-  }
-
-  // Bloc carte blanc + barre gauche (comme les cards de la page)
-  const whiteCard=(text,col)=>{
-    const ls=doc.splitTextToSize(cl(text),TW-12), h=ls.length*6+14
-    chk(h+4)
-    bx(ML,y,TW,h,3,WHT); brd(ML,y,TW,h,3,BORDER,0.4)
-    fr(ML,y,3,h,col)
-    sf(false,10,GRY); doc.text(ls,ML+8,y+9)
-    y+=h+5
-  }
-
-  // Pills (pastilles rondes comme la page)
-  const pills=(items,col)=>{
-    let sx=ML, ry=y
-    items.forEach(item=>{
-      const s=cl(item); if(!s)return
-      const sw=doc.getTextWidth(s)+12
-      if(sx+sw>W-MR){sx=ML;ry+=9;chk(10)}
-      bx(sx,ry,sw,7.5,3,WHT); brd(sx,ry,sw,7.5,3,BORDER,0.4)
-      sf(false,8.5,cA); tx(s,sx+6,ry+5.3)
-      sx+=sw+4
-    })
-    y=ry+12
-  }
-
-  // Ligne de tableau points forts (barre gauche + 2 colonnes)
-  const fortRow=(titre,desc,col,i)=>{
-    const ls=doc.splitTextToSize(cl(desc),TW*0.62-4), h=Math.max(11,ls.length*5.5+9)
-    chk(h+1)
-    bx(ML,y,TW,h,0,i%2===0?LIGHT:WHT)
-    fr(ML,y,3,h,col)
-    sf(true,9.5,col); tx(cl(titre),ML+7,y+h/2+1.5)
-    dr(BORDER); doc.setLineWidth(0.3); doc.line(ML+TW*0.36,y+2,ML+TW*0.36,y+h-2)
-    sf(false,9.5,GRY); doc.text(ls,ML+TW*0.37,y+7)
-    dr(BORDER); doc.setLineWidth(0.3); doc.line(ML,y+h,W-MR,y+h)
-    y+=h+1
-  }
-
-  // Badge catégorie métier (coloré plein, texte blanc)
-  // + items en grille 2 colonnes (fond blanc, barre gauche, titre coloré, desc grise)
-  const metBlock=(metiers,col)=>{
-    metiers.forEach(({cat,liste})=>{
-      chk(14)
-      bx(ML,y,doc.getTextWidth(cl(cat))+14,9,3,col)
-      sf(true,9.5,WHT); tx(cl(cat),ML+7,y+6.5)
-      y+=12
-      for(let i=0;i<liste.length;i+=2){
-        const L=liste[i], R=liste[i+1]
-        const lD=doc.splitTextToSize(cl(L[1]),TW/2-14)
-        const rD=R?doc.splitTextToSize(cl(R[1]),TW/2-14):[]
-        const h=Math.max(18,Math.max(lD.length,rD.length)*5.5+14)
-        chk(h+3)
-        // Carte gauche
-        bx(ML,y,TW/2-2,h,3,WHT); brd(ML,y,TW/2-2,h,3,BORDER,0.4); fr(ML,y,3,h,col)
-        sf(true,10,col); tx('v  '+cl(L[0]),ML+7,y+9)
-        sf(false,8.5,GRY); doc.text(lD,ML+7,y+15)
-        // Carte droite
-        if(R){
-          const rx=ML+TW/2+2
-          bx(rx,y,TW/2-2,h,3,WHT); brd(rx,y,TW/2-2,h,3,BORDER,0.4); fr(rx,y,3,h,col)
-          sf(true,10,col); tx('v  '+cl(R[0]),rx+7,y+9)
-          sf(false,8.5,GRY); doc.text(rD,rx+7,y+15)
-        }
-        y+=h+3
-      }
-      y+=4
-    })
-  }
-
-  // Bloc rouge "À éviter" (comme la page web)
-  const eviterBlock=(items)=>{
-    items.forEach(([titre,desc])=>{
-      const ls=doc.splitTextToSize(cl(desc),TW-14), h=ls.length*5.5+16
-      chk(h+4)
-      bx(ML,y,TW,h,3,REDBG); brd(ML,y,TW,h,3,[254,202,202],0.4); fr(ML,y,3,h,RED)
-      sf(true,10.5,RED); tx('x  '+cl(titre),ML+7,y+9)
-      sf(false,9,[127,29,29]); doc.text(ls,ML+7,y+15)
-      y+=h+5
-    })
-  }
-
-  // Ligne tableau parents (fond blanc, barre gauche)
-  const parentRow=(c1,c2,col)=>{
-    const ls=doc.splitTextToSize(cl(c2),TW*0.60-4), h=Math.max(11,ls.length*5.3+9)
-    chk(h+1)
-    bx(ML,y,TW,h,0,WHT); brd(ML,y,TW,h,0,BORDER,0.3); fr(ML,y,3,h,col)
-    sf(true,9.5,col); tx(cl(c1),ML+7,y+h/2+1.5)
-    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML+TW*0.37,y+2,ML+TW*0.37,y+h-2)
-    sf(false,9,GRY); doc.text(ls,ML+TW*0.38,y+7)
-    y+=h+1
-  }
-
-  // ════════════════════════════════════════════════════════
-  // PAGE 1 — COUVERTURE
-  // ════════════════════════════════════════════════════════
-  bx(0,0,W,H,0,WHT)
-  // Header sombre
-  fr(0,0,W,70,DRK)
-  // Cercles déco
-  bx(150,-15,70,70,35,mix(cA,0.2)); bx(170,25,40,40,20,mix(cA,0.15)); bx(-5,40,55,55,27,mix(cA,0.1))
-  // Logo
-  bx(ML,12,14,14,3,cA); sf(true,9,WHT); tx('AT',ML+7,21,'center')
-  sf(true,13,WHT); tx('ATLAS TAWJIH',ML+20,21)
-  sf(false,8,LGT)
-  tx(lang==='fr'?"Plateforme d'Orientation RIASEC":'RIASEC Orientation Platform',ML+20,27)
-  sf(false,8,LGT); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),W-MR,21,'right')
-  // Nom étudiant
-  sf(true,24,WHT); tx(`${cl(eleve.prenom)} ${cl(eleve.nom)}`,ML,47)
-  sf(false,10,LGT); tx(`${cl(eleve.filiere)}   |   ${cl(eleve.ville)}`,ML,56)
-  // Ligne
-  fr(ML,63,TW,0.5,mix(cA,0.5))
-  // Badges code Holland
-  sf(false,8.5,LGT); tx(lang==='fr'?'Code Holland :':'Holland Code:',ML,73)
-  ;[classement[0],classement[1],classement[2]].forEach((d,i)=>{
-    bx(ML+52+i*28,67,22,10,2,i===0?cA:mix(cA,0.25))
-    sf(true,i===0?10:8.5,WHT); tx(d,ML+63+i*28,74.5,'center')
-  })
-
-  y=84
-  // Carte profil dominant
-  bx(ML,y,TW,38,4,mix(cA,0.08)); brd(ML,y,TW,38,4,mix(cA,0.3),0.6); fr(ML,y,4,38,cA)
-  bx(ML+8,y+7,24,24,12,cA); sf(true,16,WHT); tx(classement[0],ML+20,y+22,'center')
-  sf(true,17,DRK); tx(cl(profA.nom),ML+38,y+16)
-  sf(false,9,GRY); tx(lang==='fr'?'Profil dominant  |  Code Holland :':'Dominant profile  |  Holland Code:',ML+38,y+24)
-  sf(true,12,cA); tx(code3,ML+38,y+32)
-  bx(W-MR-28,y+8,24,22,3,cA)
-  sf(true,16,WHT); tx(`${scores[classement[0]]}%`,W-MR-16,y+21,'center')
-  sf(false,7.5,WHT); tx('score',W-MR-16,y+28,'center')
-  y+=44
-
-  // Barres scores (2 colonnes x 3 lignes)
-  fr(ML,y,3,11,DRK); sf(true,10.5,DRK); tx(lang==='fr'?'Scores RIASEC':'RIASEC Scores',ML+7,y+8); y+=14
-  const allD=['R','I','A','S','E','C']
-  allD.forEach((d,i)=>{
-    const sc=scores[d], cc=RGB[d], col2=i%2, row=Math.floor(i/2)
-    const bx2=ML+col2*(TW/2+1), by2=y+row*11
-    sf(true,9,cc); tx(d,bx2,by2+4.5); sf(false,8.5,GRY); tx(cl(PROFILS[d][lang].nom).slice(0,12),bx2+8,by2+4.5)
-    bx(bx2+48,by2,TW/2-52,5.5,2,BORDER); bx(bx2+48,by2,Math.max(1,(TW/2-52)*sc/100),5.5,2,cc)
-    sf(true,8.5,cc); tx(`${sc}%`,bx2+TW/2-2,by2+4.5,'right')
-  })
-  y+=36
-
-  // Description profil — gradient coloré
-  gradBloc(lang==='fr'?'PROFIL EN DETAIL':'PROFILE IN DETAIL', profA.desc, cA)
-
-  // Tu seras bon dans — cadre blanc avec barre gauche + pills
-  chk(36)
-  const pillStart=y
-  fr(ML,y,3,11,cA); sf(true,10.5,cA); tx(lang==='fr'?'Tu seras tres bon dans':'You will excel in',ML+7,y+8); y+=14
-  pills(profA.bonsEn||[],cA)
-  brd(ML,pillStart-2,TW,y-pillStart+4,3,BORDER,0.4)
-
-  ftr()
-
-  // ════════════════════════════════════════════════════════
-  // PAGE 2 — POINTS FORTS
-  // ════════════════════════════════════════════════════════
-  newPg()
-  // Cadre blanc englobant avec titre
-  const fortsStart=y
-  fr(ML,y,3,11,cA); sf(true,10.5,DRK); tx(lang==='fr'?'Points forts':'Key strengths',ML+7,y+8); y+=14
-
-  // En-tête colonnes
-  chk(11); bx(ML,y,TW,10,2,LIGHT); brd(ML,y,TW,10,2,BORDER,0.4); fr(ML,y,3,10,cA)
-  sf(true,9.5,cA); tx(lang==='fr'?'Point fort':'Strength',ML+7,y+7)
-  dr(BORDER); doc.setLineWidth(0.3); doc.line(ML+TW*0.36,y+2,ML+TW*0.36,y+8)
-  sf(true,9.5,GRY); tx(lang==='fr'?'Ce que ca signifie pour toi':'What it means for you',ML+TW*0.37,y+7)
-  y+=12
-
-  profA.forts.forEach(([fort,desc],i)=>fortRow(fort,desc,cA,i))
-  // Cadre global
-  brd(ML,fortsStart-2,TW,y-fortsStart+4,3,BORDER,0.4)
-  y+=8; ftr()
-
-  // ════════════════════════════════════════════════════════
-  // PLAN A
-  // ════════════════════════════════════════════════════════
-  newPg()
-  // Badge plan (comme la page — fond coloré, icone lettre, texte)
-  bx(ML,y,120,26,4,cA); fr(ML,y,5,26,drk(cA,0.2))
-  bx(ML+8,y+5,16,16,8,WHT); sf(true,11,cA); tx('A',ML+16,y+15.5,'center')
-  sf(true,8,mix(cA,0.3)); tx(lang==='fr'?'PLAN A - PRIORITE':'PLAN A - PRIORITY',ML+30,y+10)
-  sf(true,14,WHT); tx(`${classement[0]} - ${cl(profA.nom)} (${scores[classement[0]]}%)`,ML+30,y+21)
-  y+=32
-
-  // Domaines — cadre blanc + titre + pills
-  chk(40); const domY=y
-  fr(ML,y,3,11,cA); sf(true,10.5,cA); tx(lang==='fr'?"Domaines d'etudes":'Fields of study',ML+7,y+8); y+=14
-  pills(profA.domaines,cA)
-  brd(ML,domY-2,TW,y-domY+4,3,BORDER,0.4); y+=3
-
-  // Métiers — titre + cards
-  fr(ML,y,3,11,cA); sf(true,10.5,cA); tx(lang==='fr'?'Metiers recommandes':'Recommended careers',ML+7,y+8); y+=14
-  metBlock(profA.metiers,cA)
-  ftr()
-
-  // ════════════════════════════════════════════════════════
-  // PLAN B
-  // ════════════════════════════════════════════════════════
-  newPg()
-  bx(ML,y,120,26,4,cB); fr(ML,y,5,26,drk(cB,0.2))
-  bx(ML+8,y+5,16,16,8,WHT); sf(true,11,cB); tx('B',ML+16,y+15.5,'center')
-  sf(true,8,mix(cB,0.3)); tx(lang==='fr'?'PLAN B - ALTERNATIVE':'PLAN B - ALTERNATIVE',ML+30,y+10)
-  sf(true,14,WHT); tx(`${classement[1]} - ${cl(profB.nom)} (${scores[classement[1]]}%)`,ML+30,y+21)
-  y+=32
-  chk(40); const domYb=y
-  fr(ML,y,3,11,cB); sf(true,10.5,cB); tx(lang==='fr'?"Domaines d'etudes":'Fields of study',ML+7,y+8); y+=14
-  pills(profB.domaines,cB); brd(ML,domYb-2,TW,y-domYb+4,3,BORDER,0.4); y+=3
-  fr(ML,y,3,11,cB); sf(true,10.5,cB); tx(lang==='fr'?'Metiers recommandes':'Recommended careers',ML+7,y+8); y+=14
-  metBlock(profB.metiers,cB); ftr()
-
-  // ════════════════════════════════════════════════════════
-  // PLAN C
-  // ════════════════════════════════════════════════════════
-  newPg()
-  bx(ML,y,120,26,4,cC); fr(ML,y,5,26,drk(cC,0.2))
-  bx(ML+8,y+5,16,16,8,WHT); sf(true,11,cC); tx('C',ML+16,y+15.5,'center')
-  sf(true,8,mix(cC,0.3)); tx(lang==='fr'?'PLAN C - OPTION DE REPLI':'PLAN C - BACKUP',ML+30,y+10)
-  sf(true,14,WHT); tx(`${classement[2]} - ${cl(profC.nom)} (${scores[classement[2]]}%)`,ML+30,y+21)
-  y+=32
-  chk(40); const domYc=y
-  fr(ML,y,3,11,cC); sf(true,10.5,cC); tx(lang==='fr'?"Domaines d'etudes":'Fields of study',ML+7,y+8); y+=14
-  pills(profC.domaines,cC); brd(ML,domYc-2,TW,y-domYc+4,3,BORDER,0.4); y+=3
-  fr(ML,y,3,11,cC); sf(true,10.5,cC); tx(lang==='fr'?'Metiers recommandes':'Recommended careers',ML+7,y+8); y+=14
-  metBlock(profC.metiers,cC); ftr()
-
-  // ════════════════════════════════════════════════════════
-  // PAGE — ENVIRONNEMENT
-  // ════════════════════════════════════════════════════════
-  newPg()
-  // Titre section
-  fr(ML,y,3,11,cA); sf(true,12,DRK); tx(lang==='fr'?'Environnement et Conseils':'Environment and Advice',ML+7,y+8.5); y+=15
-
-  // Environnement idéal — cadre blanc + barre gauche
-  chk(30); const envY=y
-  fr(ML,y,3,11,cA); sf(true,10.5,DRK); tx(lang==='fr'?'Environnement de travail ideal':'Ideal work environment',ML+7,y+8); y+=14
-  whiteCard(profA.env,cA)
-  // Pills lieux
-  chk(36); const lieuxY=y
-  pills(profA.envIdeal||[],cA)
-  brd(ML,envY-2,TW,y-envY+4,3,BORDER,0.4); y+=4
-
-  // À éviter (rouge, comme la page)
-  fr(ML,y,3,11,RED); sf(true,10.5,RED); tx(lang==='fr'?'A eviter':'To avoid',ML+7,y+8); y+=14
-  eviterBlock(profA.eviter||[])
-  y+=4
-
-  // Message personnel
-  chk(30); const msgY=y
-  fr(ML,y,3,11,cA); sf(true,10.5,DRK); tx(lang==='fr'?'Message personnel':'Personal message',ML+7,y+8); y+=14
-  const motiv=lang==='fr'
-    ?`${cl(eleve.prenom)}, ce rapport est un point de depart, pas un verdict definitif. Ton profil ${cl(profA.nom)} est un veritable atout. Fais confiance a tes forces naturelles et construis ton avenir avec passion !`
-    :`${cl(eleve.prenom)}, this report is a starting point, not a final verdict. Your ${cl(profA.nom)} profile is a real asset. Trust your natural strengths and build your future with passion!`
-  whiteCard(motiv,cA)
-  ftr()
-
-  // ════════════════════════════════════════════════════════
-  // PAGE — NOTE PARENTS
-  // ════════════════════════════════════════════════════════
-  newPg()
-  fr(ML,y,3,11,AMB); sf(true,12,DRK); tx(lang==='fr'?'Note pour les parents':'Note for parents',ML+7,y+8.5); y+=15
-
-  // Note principale
-  chk(40)
-  const noteY=y
-  const noteText=lang==='fr'
-    ?`Chers parents,\n\nVotre enfant ${cl(eleve.prenom)} a un profil ${cl(profA.nom)} dominant (${scores[classement[0]]}%). Ce resultat est une base de reflexion, pas un verdict definitif. Ce rapport ouvre des pistes, il ne ferme pas de portes.\n\nNous vous recommandons d'explorer ensemble les domaines compatibles listes dans ce rapport. Les recommandations d'etablissements seront communiquees par l'equipe Atlas Tawjih selon la situation et les preferences de votre enfant.`
-    :`Dear parents,\n\nYour child ${cl(eleve.prenom)} has a dominant ${cl(profA.nom)} profile (${scores[classement[0]]}%). This result is a basis for reflection, not a final verdict. This report opens paths.\n\nWe recommend exploring compatible fields together. Institution recommendations will be provided by the Atlas Tawjih team.`
-  const noteLs=doc.splitTextToSize(cl(noteText),TW-12), noteH=noteLs.length*5.8+14
-  bx(ML,y,TW,noteH,3,AMBBG); brd(ML,y,TW,noteH,3,[253,230,138],0.5); fr(ML,y,3,noteH,AMB)
-  sf(false,10,DRK); doc.text(noteLs,ML+8,y+9)
-  y+=noteH+8
-
-  // Conseils parents — tableau
-  chk(12)
-  fr(ML,y,3,11,AMB); sf(true,10.5,DRK); tx(lang==='fr'?'Comment accompagner votre enfant':'How to support your child',ML+7,y+8); y+=14
-  ;(lang==='fr'?[
-    [`Ne pas imposer`,`Laissez votre enfant explorer ses interets naturels sans imposer de filiere.`],
-    [`Valoriser les interets`,`Soutenez ses passions meme si elles semblent inhabituelles.`],
-    [`Offrir des ressources`,`Livres, stages, visites : tout ce qui nourrit son projet est utile.`],
-    [`Respecter l'autonomie`,`Il a besoin d'espace pour reflechir et construire son projet.`],
-    [`Contacter Atlas Tawjih`,`Notre equipe accompagne votre enfant dans ses demarches.`],
-  ]:[
-    [`Do not impose`,`Let your child explore natural interests without imposing a field.`],
-    [`Value interests`,`Support their passions even if unusual.`],
-    [`Offer resources`,`Books, internships, visits: everything builds their project.`],
-    [`Respect autonomy`,`They need space to think and build their project.`],
-    [`Contact Atlas Tawjih`,`Our team supports your child through their orientation journey.`],
-  ]).forEach(([t,d])=>parentRow(t,d,AMB))
-  ftr()
-
-  // ════════════════════════════════════════════════════════
-  // PAGE FINALE — RECAP (TOUT SUR UNE SEULE PAGE)
-  // ════════════════════════════════════════════════════════
-  newPg()
-  fr(ML,y,3,11,cA); sf(true,12,DRK)
-  tx(lang==='fr'?'Graphique radar - Vue d\'ensemble':'Radar chart - Overview',ML+7,y+8.5); y+=15
-
-  // ── Radar hexagonal (gauche) + Tableau barres (droite) ──
-  const radarW=80, tableX=ML+radarW+8, tableW=TW-radarW-8
-  const cx=ML+radarW/2, cy=y+38, R6=30
-  const dims6=['R','I','A','S','E','C']
-  const angles=dims6.map((_,i)=>(-Math.PI/2)+(i*2*Math.PI/6))
-
-  // Grille radar
-  ;[0.25,0.5,0.75,1].forEach(scale=>{
-    dr(scale===1?BORDER:[235,237,242]); doc.setLineWidth(scale===1?0.5:0.3)
-    const pts2=angles.map(a=>[cx+R6*scale*Math.cos(a),cy+R6*scale*Math.sin(a)])
-    doc.moveTo(pts2[0][0],pts2[0][1])
-    pts2.forEach(p=>doc.lineTo(p[0],p[1]))
-    doc.close(); doc.stroke()
-  })
-  // Axes
-  angles.forEach(a=>{dr(BORDER);doc.setLineWidth(0.3);doc.line(cx,cy,cx+R6*Math.cos(a),cy+R6*Math.sin(a))})
-
-  // Zone colorée (profil)
-  const dataPts=dims6.map((d,i)=>[cx+R6*(scores[d]/100)*Math.cos(angles[i]),cy+R6*(scores[d]/100)*Math.sin(angles[i])])
-  doc.setFillColor(cA[0],cA[1],cA[2])
-  try{doc.setGState(doc.GState({opacity:0.25}));} catch(e){}
-  doc.moveTo(dataPts[0][0],dataPts[0][1]); dataPts.forEach(p=>doc.lineTo(p[0],p[1])); doc.close(); doc.fill()
-  try{doc.setGState(doc.GState({opacity:1}));} catch(e){}
-  // Contour
-  dr(cA); doc.setLineWidth(1.2)
-  doc.moveTo(dataPts[0][0],dataPts[0][1]); dataPts.forEach(p=>doc.lineTo(p[0],p[1])); doc.close(); doc.stroke()
-  // Points
-  dataPts.forEach(([px,py])=>{fl(cA);doc.circle(px,py,1.5,'F')})
-  // Labels
-  dims6.forEach((d,i)=>{
-    const lx=cx+(R6+9)*Math.cos(angles[i]), ly=cy+(R6+9)*Math.sin(angles[i])
-    sf(true,8,RGB[d]); tx(d,lx,ly+1,'center')
-  })
-
-  // Tableau barres horizontales (droite)
-  let ty=y
-  dims6.forEach((d,i)=>{
-    const sc=scores[d], cc=RGB[d]
-    const barW=tableW-30, barH=5.5, barX=tableX+22
-    sf(true,9,cc); tx(d,tableX,ty+5)
-    sf(false,8.5,GRY); tx(cl(PROFILS[d][lang].nom).slice(0,12),tableX+8,ty+5)
-    bx(barX,ty,barW,barH,2,BORDER); bx(barX,ty,Math.max(1,barW*sc/100),barH,2,cc)
-    sf(true,9,cc); tx(`${sc}%`,tableX+tableW,ty+5,'right')
-    ty+=11
-  })
-  y=cy+R6+14
-
-  // Interprétation niveaux (comme screenshot)
-  chk(38)
-  fr(ML,y,3,11,cA); sf(true,10,DRK); tx(lang==='fr'?'Interpretation des niveaux':'Level interpretation',ML+7,y+8); y+=14
-  const levels=lang==='fr'
-    ?[['0 - 30%','Faible interet',[148,163,184]],['31 - 55%','Interet modere',cA],['56 - 75%','Fort interet',cA],['76 - 100%','Tres fort interet',cA]]
-    :[['0 - 30%','Low interest',[148,163,184]],['31 - 55%','Moderate interest',cA],['56 - 75%','Strong interest',cA],['76 - 100%','Very strong interest',cA]]
-  const levW=TW/2
-  levels.forEach(([range,label,col],i)=>{
-    const lx=ML+(i%2)*levW, lW=levW-4
-    bx(lx,y,lW,9,2,i===0?LIGHT:mix(col,0.9)); brd(lx,y,lW,9,2,BORDER,0.3)
-    sf(true,8.5,i===0?GRY:col); tx(range,lx+5,y+6.5)
-    sf(false,8,i===0?GRY:drk(col,0.1)); tx(label,lx+28,y+6.5)
-    if(i%2===1) y+=11
-  })
-  y+=14
-
-  // Infos élève compact
-  fr(ML,y,3,11,cA); sf(true,10,DRK); tx(lang==='fr'?"Informations de l'eleve":'Student information',ML+7,y+8); y+=14
-  const mobV=eleve.mobilite==='oui'?(lang==='fr'?'Oui - toute ville':'Yes - any city'):eleve.mobilite==='non'?(lang==='fr'?'Non':'No'):(lang==='fr'?'Certaines villes':'Certain cities')
-  ;[
-    [lang==='fr'?'Nom':'Name',`${cl(eleve.prenom)} ${cl(eleve.nom)}`],
-    [lang==='fr'?'Filiere':'Field',cl(eleve.filiere)],
-    ['Ville',cl(eleve.ville)],
-    [lang==='fr'?'Mobilite':'Mobility',mobV],
-    ['Code Holland',`${code3} - ${cl(profA.nom)} / ${cl(profB.nom)} / ${cl(profC.nom)}`],
-  ].forEach(([k,v],i)=>{
-    const h=9
-    bx(ML,y,TW,h,0,i%2===0?LIGHT:WHT); brd(ML,y,TW,h,0,BORDER,0.3); fr(ML,y,3,h,cA)
-    sf(true,9,DRK); tx(cl(String(k)),ML+6,y+6.5)
-    sf(false,9,GRY); tx(cl(String(v||'')),ML+TW*0.38,y+6.5)
-    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML,y+h,W-MR,y+h)
-    y+=h
-  })
-  y+=8
-
-  // Contact & Suivi
-  fr(ML,y,3,11,cA); sf(true,10,DRK); tx(lang==='fr'?'Contact et Suivi':'Contact and Follow-up',ML+7,y+8); y+=14
-  ;[
-    ['Site web','atlas-tawjih.vercel.app'],
-    ['Email','atlastawjih.maroc@gmail.com'],
-    [lang==='fr'?'Suivi':'Follow-up',lang==='fr'?'Notre equipe vous accompagne dans vos demarches d\'orientation.':'Our team supports you through your orientation journey.'],
-  ].forEach(([k,v],i)=>{
-    const ls2=doc.splitTextToSize(cl(v),TW*0.62-4), h2=Math.max(9,ls2.length*5.2+7)
-    bx(ML,y,TW,h2,0,i%2===0?LIGHT:WHT); brd(ML,y,TW,h2,0,BORDER,0.3)
-    sf(true,9.5,DRK); tx(cl(k),ML+5,y+h2/2+1.5)
-    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML+TW*0.36,y+2,ML+TW*0.36,y+h2-2)
-    sf(false,9,GRY); doc.text(ls2,ML+TW*0.37,y+7)
-    dr(BORDER); doc.setLineWidth(0.25); doc.line(ML,y+h2,W-MR,y+h2)
-    y+=h2
-  })
-  y+=10
-
-  // Signature premium
-  dr(cA); doc.setLineWidth(0.8); doc.line(ML+20,y,W/2,y)
-  dr(cA); doc.line(W/2+20,y,W-MR-20,y); y+=6
-  sf(false,8.5,GRY); tx(lang==='fr'?'Certifie par':'Certified by',ML+20,y)
-  tx(lang==='fr'?'Cachet et Signature':'Stamp and Signature',W/2+20,y); y+=6
-  sf(true,13,DRK); tx(lang==='fr'?'Equipe Atlas Tawjih':'Atlas Tawjih Team',ML+20,y)
-  sf(false,8,GRY); tx(new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US'),ML+20,y+7)
-  // Cachet coloré
-  bx(W/2+20,y-4,TW/2-20,22,4,cA)
-  sf(true,12,WHT); tx('ATLAS TAWJIH',W/2+20+(TW/2-20)/2,y+5,'center')
-  sf(false,8,mix(cA,0.35)); tx('atlastawjih.maroc@gmail.com',W/2+20+(TW/2-20)/2,y+12,'center')
-  sf(false,7,mix(cA,0.3)); tx(lang==='fr'?'Rapport officiel':'Official report',W/2+20+(TW/2-20)/2,y+18,'center')
-  y+=28
-
-  // Disclaimer
-  dr(BORDER); doc.setLineWidth(0.5); doc.line(ML,y,W-MR,y); y+=5
-  const disc=lang==='fr'
-    ?`Ce rapport a ete genere automatiquement par la plateforme Atlas Tawjih. Les resultats sont bases sur les reponses fournies par l'eleve lors du test RIASEC. Ce document est confidentiel - toute reproduction partielle ou totale est interdite sans autorisation.`
-    :`This report was automatically generated by the Atlas Tawjih platform. Results are based on the student's RIASEC test responses. This document is confidential — any partial or total reproduction is prohibited without authorization.`
-  const discLs=doc.splitTextToSize(cl(disc),TW)
-  sf(false,7.5,LGT); doc.text(discLs,ML,y+4)
-
-  ftr()
-  doc.save(`AtlasTawjih_${cl(eleve.prenom)}_${cl(eleve.nom)}_${code3}.pdf`)
-}
-
 
 export default function Resultats() {
   const navigate = useNavigate()
@@ -1365,9 +878,7 @@ export default function Resultats() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfLang, setPdfLang]     = useState('fr')
   const [showAll, setShowAll] = useState(false)
-  const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackDone, setFeedbackDone] = useState(false)
-  const [showFeedbackAlert, setShowFeedbackAlert] = useState(false)
 
   useEffect(() => {
     const rep = sessionStorage.getItem('reponses_test')
@@ -1711,78 +1222,135 @@ export default function Resultats() {
           />
         </div>
 
-        {/* ── BOUTON TÉLÉCHARGEMENT PDF ── */}
-        <div style={{ background:'#fff', border:`1.5px solid ${feedbackDone?DIM_COLORS[classement[0]]:'#E2E8F0'}`, borderRadius:14, padding:'20px', marginBottom:16, textAlign:'center', transition:'border-color 0.3s' }}>
-          <div style={{ fontSize:14, fontWeight:700, color:'#1E293B', marginBottom:6 }}>
-            {lang==='fr' ? '📄 Télécharger votre rapport complet' : '📄 Download your full report'}
+
+        {/* ── RADAR GRAPHIQUE ── */}
+        <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:16, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+            {lang==='fr' ? `Graphique radar - Vue ensemble` : `Radar chart - Overview`}
           </div>
-          <div style={{ fontSize:12, color:'#64748B', marginBottom:14 }}>
-            {lang==='fr' ? 'Rapport PDF personnalisé avec tous vos résultats, métiers et conseils' : 'Personalized PDF report with all your results, careers and advice'}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, alignItems:'center' }}>
+            {/* SVG Radar */}
+            <div style={{ display:'flex', justifyContent:'center' }}>
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                {(() => {
+                  const dims6=['R','I','A','S','E','C']
+                  const cx=100, cy=100, R=70
+                  const angles=dims6.map((_,i)=>(-Math.PI/2)+(i*2*Math.PI/6))
+                  const hexPts=(r)=>dims6.map((_,i)=>[cx+r*Math.cos(angles[i]),cy+r*Math.sin(angles[i])])
+                  const toPath=(pts)=>pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'Z'
+                  const DIM_COLORS_MAP={R:'#EF4444',I:'#3B82F6',A:'#8B5CF6',S:'#10B981',E:'#F59E0B',C:'#06B6D4'}
+                  const dataPts=dims6.map((d,i)=>[cx+R*(scores[d]/100)*Math.cos(angles[i]),cy+R*(scores[d]/100)*Math.sin(angles[i])])
+                  return (<>
+                    {[0.25,0.5,0.75,1].map(s=>(
+                      <polygon key={s} points={hexPts(R*s).map(p=>p.join(',')).join(' ')} fill="none" stroke="#E2E8F0" strokeWidth={s===1?0.8:0.5} />
+                    ))}
+                    {angles.map((a,i)=>(
+                      <line key={i} x1={cx} y1={cy} x2={cx+R*Math.cos(a)} y2={cy+R*Math.sin(a)} stroke="#E2E8F0" strokeWidth="0.5" />
+                    ))}
+                    <polygon points={dataPts.map(p=>p.join(',')).join(' ')} fill={DIM_COLORS[classement[0]]+'33'} stroke={DIM_COLORS[classement[0]]} strokeWidth="1.5" />
+                    {dataPts.map(([x,z],i)=>(<circle key={i} cx={x} cy={z} r="3" fill={DIM_COLORS[classement[0]]} />))}
+                    {dims6.map((d,i)=>{
+                      const lx=cx+(R+14)*Math.cos(angles[i]), ly=cy+(R+14)*Math.sin(angles[i])
+                      return (<text key={d} x={lx} y={ly+4} textAnchor="middle" fontSize="9" fontWeight="700" fill={DIM_COLORS_MAP[d]}>{d}</text>)
+                    })}
+                  </>)
+                })()}
+              </svg>
+            </div>
+            {/* Barres horizontales */}
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {getClassement(scores).map(dim => (
+                <div key={dim} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:12 }}>{dim}</span>
+                  <span style={{ fontSize:10, color:'#64748B', width:90 }}>{PROFILS[dim][lang].nom}</span>
+                  <div style={{ flex:1, height:10, background:'#F1F5F9', borderRadius:4, overflow:'hidden' }}>
+                    <div style={{ width:`${scores[dim]}%`, height:'100%', background:DIM_COLORS[dim], borderRadius:4 }} />
+                  </div>
+                  <span style={{ fontSize:11, fontWeight:700, color:DIM_COLORS[dim], width:32, textAlign:'right' }}>{scores[dim]}%</span>
+                </div>
+              ))}
+            </div>
           </div>
-
-          {/* Alerte feedback requis */}
-          {showFeedbackAlert && !feedbackDone && (
-            <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:8, padding:'10px 14px', marginBottom:12, fontSize:12, color:'#991B1B', display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize:16 }}>⚠️</span>
-              <span>{lang==='fr' ? 'Merci de remplir le formulaire de feedback ci-dessus avant de télécharger votre rapport.' : 'Please fill in the feedback form above before downloading your report.'}</span>
-            </div>
-          )}
-
-          {/* Badge feedback validé */}
-          {feedbackDone && (
-            <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:8, padding:'8px 14px', marginBottom:12, fontSize:12, color:'#065F46', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
-              <span>✅</span>
-              <span>{lang==='fr' ? 'Feedback envoyé — rapport disponible !' : 'Feedback sent — report available!'}</span>
-            </div>
-          )}
-
-          {/* Sélecteur de langue */}
-          <div style={{ display:'flex', justifyContent:'center', gap:8, marginBottom:14 }}>
-            <button
-              onClick={() => setPdfLang('fr')}
-              style={{ padding:'8px 20px', borderRadius:8, border:`2px solid ${pdfLang==='fr'?'#7C3AED':'#E2E8F0'}`, background:pdfLang==='fr'?'#7C3AED':'#fff', color:pdfLang==='fr'?'#fff':'#64748B', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-              🇫🇷 Français
-            </button>
-            <button
-              onClick={() => setPdfLang('en')}
-              style={{ padding:'8px 20px', borderRadius:8, border:`2px solid ${pdfLang==='en'?'#7C3AED':'#E2E8F0'}`, background:pdfLang==='en'?'#7C3AED':'#fff', color:pdfLang==='en'?'#fff':'#64748B', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-              🇬🇧 English
-            </button>
+          {/* Interprétation niveaux */}
+          <div style={{ marginTop:16, display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6 }}>
+            {[
+              ['0–30%',   lang==='fr'?'Faible interet':'Low interest',       '#94A3B8','#F8FAFC'],
+              ['31–55%',  lang==='fr'?'Interet modere':'Moderate interest',   DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}15`],
+              ['56–75%',  lang==='fr'?'Fort interet':'Strong interest',        DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}20`],
+              ['76–100%', lang==='fr'?'Tres fort interet':'Very strong',       DIM_COLORS[classement[0]],`${DIM_COLORS[classement[0]]}30`],
+            ].map(([range,label,col,bg])=>(
+              <div key={range} style={{ background:bg, border:`1px solid ${col}30`, borderRadius:8, padding:'6px 8px', textAlign:'center' }}>
+                <div style={{ fontSize:11, fontWeight:700, color:col }}>{range}</div>
+                <div style={{ fontSize:10, color:'#64748B', marginTop:2 }}>{label}</div>
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* Bouton télécharger */}
-          <button
-            onClick={async () => {
-              if(!feedbackDone){
-                setShowFeedbackAlert(true)
-                // Scroll vers le feedback
-                document.getElementById('feedback-section')?.scrollIntoView({ behavior:'smooth', block:'center' })
-                return
-              }
-              if(!eleve || !scores || !classement.length) return
-              setPdfLoading(true)
-              try {
-                await genererPDF(eleve, scores, classement, pdfLang)
-              } catch(e) {
-                alert((lang==='fr'?'Erreur PDF : ':'PDF Error: ') + e.message)
-              } finally {
-                setPdfLoading(false)
-              }
-            }}
-            disabled={pdfLoading}
-            style={{ padding:'12px 32px', background:pdfLoading?'#94A3B8':feedbackDone?`linear-gradient(135deg,${DIM_COLORS[classement[0]]},${DIM_COLORS[classement[0]]}CC)`:'#94A3B8', color:'#fff', border:'none', borderRadius:10, fontSize:14, fontWeight:700, cursor:pdfLoading?'not-allowed':'pointer', display:'inline-flex', alignItems:'center', gap:8, boxShadow:'0 4px 12px rgba(0,0,0,0.15)', opacity:feedbackDone?1:0.7 }}>
-            {pdfLoading
-              ? (lang==='fr'?'⏳ Génération en cours...':'⏳ Generating...')
-              : feedbackDone
-                ? (lang==='fr'?'⬇️ Télécharger le rapport PDF':'⬇️ Download PDF report')
-                : (lang==='fr'?'🔒 Feedback requis pour débloquer':'🔒 Feedback required to unlock')}
-          </button>
-
-          {!feedbackDone && (
-            <div style={{ marginTop:10, fontSize:11, color:'#94A3B8' }}>
-              {lang==='fr' ? '👆 Remplis le feedback ci-dessus pour débloquer le rapport' : '👆 Fill in the feedback above to unlock the report'}
+        {/* ── RECAPITULATIF SIMPLE ── */}
+        <div style={{ background:'#fff', border:'1px solid #E2E8F0', borderRadius:12, padding:'20px', marginBottom:14 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#1E293B', marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+            {lang==='fr' ? "Récapitulatif de l'élève" : 'Student summary'}
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
+            {[
+              [lang==='fr'?'Nom complet':'Full name', `${eleve?.prenom} ${eleve?.nom}`],
+              [lang==='fr'?'Filière Bac':'Field', eleve?.filiere],
+              ['Ville', eleve?.ville],
+              [lang==='fr'?'Mobilité':'Mobility', eleve?.mobilite==='oui'?(lang==='fr'?'Oui – toute ville':'Yes – any city'):eleve?.mobilite==='non'?(lang==='fr'?'Non':'No'):(lang==='fr'?'Certaines villes':'Certain cities')],
+              [lang==='fr'?'Écoles privées':'Private schools', eleve?.prive==='oui'?(lang==='fr'?'Oui':'Yes'):(lang==='fr'?'Non':'No')],
+              ['Code Holland', `${code3} — ${profilDom.nom} / ${PROFILS[classement[1]][lang].nom} / ${PROFILS[classement[2]][lang].nom}`],
+              [lang==='fr'?'Date du test':'Test date', new Date().toLocaleDateString(lang==='fr'?'fr-FR':'en-US')],
+            ].map(([k,v],i) => (
+              <div key={i} style={{ display:'grid', gridTemplateColumns:'160px 1fr', background:i%2===0?`${DIM_COLORS[classement[0]]}08`:'#fff', padding:'9px 12px', borderRadius:6 }}>
+                <span style={{ fontSize:12, fontWeight:600, color:'#1E293B' }}>{k}</span>
+                <span style={{ fontSize:12, color:'#475569' }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          {/* Contact Atlas Tawjih */}
+          <div style={{ marginTop:14, background:`${DIM_COLORS[classement[0]]}10`, border:`1px solid ${DIM_COLORS[classement[0]]}25`, borderRadius:8, padding:'12px 14px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <div style={{ fontSize:12, fontWeight:700, color:DIM_COLORS[classement[0]] }}>
+                {lang==='fr' ? `Contacter Atlas Tawjih` : `Contact Atlas Tawjih`}
+              </div>
+              <div style={{ fontSize:11, color:'#64748B', marginTop:2 }}>
+                {lang==='fr' ? 'Pour les recommandations d'établissements' : 'For school recommendations'}
+              </div>
             </div>
-          )}
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:13, fontWeight:700, color:DIM_COLORS[classement[0]] }}>📞 0703244407</div>
+              <div style={{ fontSize:10, color:'#94A3B8' }}>atlastawjih.maroc@gmail.com</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RECOMMANDATIONS ETABLISSEMENTS ── */}
+        <div style={{ background:`${DIM_COLORS[classement[0]]}08`, border:`1.5px solid ${DIM_COLORS[classement[0]]}25`, borderRadius:12, padding:'18px 20px', marginBottom:14 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:DIM_COLORS[classement[0]], marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:3, height:14, background:DIM_COLORS[classement[0]], borderRadius:2, display:'inline-block' }}></span>
+            {lang==='fr' ? `A propos des recommandations d'etablissements` : `About school recommendations`}
+          </div>
+          <div style={{ fontSize:12, color:'#475569', lineHeight:1.8 }}>
+            {lang==='fr'
+              ? `Les recommandations d'établissements et de filières spécifiques seront communiquées directement par l'équipe Atlas Tawjih, en tenant compte du profil de ${eleve?.prenom}, de sa ville, de ses préférences de mobilité et de son intérêt pour le privé. N'hésitez pas à nous contacter.`
+              : `School and field recommendations will be provided directly by the Atlas Tawjih team, taking into account ${eleve?.prenom}'s profile, city, mobility preferences and interest in private schools. Feel free to contact us.`}
+          </div>
+          <div style={{ marginTop:10, display:'flex', gap:10 }}>
+            <span style={{ background:DIM_COLORS[classement[0]], color:'#fff', padding:'5px 14px', borderRadius:8, fontSize:12, fontWeight:600 }}>📞 0703244407</span>
+            <span style={{ background:'#fff', color:DIM_COLORS[classement[0]], border:`1px solid ${DIM_COLORS[classement[0]]}`, padding:'5px 14px', borderRadius:8, fontSize:12, fontWeight:600 }}>📧 atlastawjih.maroc@gmail.com</span>
+          </div>
+        </div>
+
+        {/* ── DISCLAIMER ── */}
+        <div style={{ background:'#F8FAFC', border:'1px solid #E2E8F0', borderRadius:8, padding:'12px 16px', marginBottom:16 }}>
+          <div style={{ fontSize:11, color:'#94A3B8', lineHeight:1.7, fontStyle:'italic' }}>
+            {lang==='fr'
+              ? "Ce rapport a été généré automatiquement par la plateforme Atlas Tawjih. Les résultats sont basés sur les réponses fournies par l'élève lors du test RIASEC. Ce document est à titre indicatif uniquement."
+              : "This report was automatically generated by the Atlas Tawjih platform. Results are based on the student's RIASEC test responses. This document is for guidance purposes only."}
+          </div>
         </div>
 
         {/* REFAIRE */}
