@@ -34,7 +34,7 @@ const T = {
     message: 'Ton message (max 3 lignes · français, anglais ou darija)',
     message_ph: 'Dis-nous ce que tu penses du test...',
     note_label: 'Note le test :',
-    btn: '📄 Envoyer et télécharger mon PDF',
+    btn: '📄 Envoyer Mon Avis',
     sending: '⏳ Envoi...',
     merci: 'Merci pour ton feedback !',
     merci2: '',
