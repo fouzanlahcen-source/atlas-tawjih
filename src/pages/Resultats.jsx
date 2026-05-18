@@ -1341,6 +1341,7 @@ export default function Resultats() {
   const [showAll, setShowAll] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackDone, setFeedbackDone] = useState(false)
+  const [showFeedbackAlert, setShowFeedbackAlert] = useState(false)
 
   useEffect(() => {
     const rep = sessionStorage.getItem('reponses_test')
