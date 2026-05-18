@@ -125,6 +125,7 @@ export default function Feedback({ lang = 'fr', profilRiasec = '', onValide }) {
     })
     setLoading(false)
     setDone(true)
+    if(onValide) onValide()
     setTimeout(() => onValide?.(), 1600)
   }
 

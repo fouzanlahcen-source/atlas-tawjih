@@ -1673,6 +1673,89 @@ export default function Resultats() {
           </div>
         </div>
 
+        {/* ── FEEDBACK OBLIGATOIRE ── */}
+        <div id="feedback-section" style={{ marginBottom:16 }}>
+          <Feedback
+            lang={lang}
+            profilRiasec={profilDom.nom}
+            onValide={() => setFeedbackDone(true)}
+          />
+        </div>
+
+        {/* ── BOUTON TÉLÉCHARGEMENT PDF ── */}
+        <div style={{ background:'#fff', border:`1.5px solid ${feedbackDone?DIM_COLORS[classement[0]]:'#E2E8F0'}`, borderRadius:14, padding:'20px', marginBottom:16, textAlign:'center', transition:'border-color 0.3s' }}>
+          <div style={{ fontSize:14, fontWeight:700, color:'#1E293B', marginBottom:6 }}>
+            {lang==='fr' ? '📄 Télécharger votre rapport complet' : '📄 Download your full report'}
+          </div>
+          <div style={{ fontSize:12, color:'#64748B', marginBottom:14 }}>
+            {lang==='fr' ? 'Rapport PDF personnalisé avec tous vos résultats, métiers et conseils' : 'Personalized PDF report with all your results, careers and advice'}
+          </div>
+
+          {/* Alerte feedback requis */}
+          {showFeedbackAlert && !feedbackDone && (
+            <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:8, padding:'10px 14px', marginBottom:12, fontSize:12, color:'#991B1B', display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:16 }}>⚠️</span>
+              <span>{lang==='fr' ? 'Merci de remplir le formulaire de feedback ci-dessus avant de télécharger votre rapport.' : 'Please fill in the feedback form above before downloading your report.'}</span>
+            </div>
+          )}
+
+          {/* Badge feedback validé */}
+          {feedbackDone && (
+            <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:8, padding:'8px 14px', marginBottom:12, fontSize:12, color:'#065F46', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+              <span>✅</span>
+              <span>{lang==='fr' ? 'Feedback envoyé — rapport disponible !' : 'Feedback sent — report available!'}</span>
+            </div>
+          )}
+
+          {/* Sélecteur de langue */}
+          <div style={{ display:'flex', justifyContent:'center', gap:8, marginBottom:14 }}>
+            <button
+              onClick={() => setPdfLang('fr')}
+              style={{ padding:'8px 20px', borderRadius:8, border:`2px solid ${pdfLang==='fr'?'#7C3AED':'#E2E8F0'}`, background:pdfLang==='fr'?'#7C3AED':'#fff', color:pdfLang==='fr'?'#fff':'#64748B', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+              🇫🇷 Français
+            </button>
+            <button
+              onClick={() => setPdfLang('en')}
+              style={{ padding:'8px 20px', borderRadius:8, border:`2px solid ${pdfLang==='en'?'#7C3AED':'#E2E8F0'}`, background:pdfLang==='en'?'#7C3AED':'#fff', color:pdfLang==='en'?'#fff':'#64748B', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+              🇬🇧 English
+            </button>
+          </div>
+
+          {/* Bouton télécharger */}
+          <button
+            onClick={async () => {
+              if(!feedbackDone){
+                setShowFeedbackAlert(true)
+                // Scroll vers le feedback
+                document.getElementById('feedback-section')?.scrollIntoView({ behavior:'smooth', block:'center' })
+                return
+              }
+              if(!eleve || !scores || !classement.length) return
+              setPdfLoading(true)
+              try {
+                await genererPDF(eleve, scores, classement, pdfLang)
+              } catch(e) {
+                alert((lang==='fr'?'Erreur PDF : ':'PDF Error: ') + e.message)
+              } finally {
+                setPdfLoading(false)
+              }
+            }}
+            disabled={pdfLoading}
+            style={{ padding:'12px 32px', background:pdfLoading?'#94A3B8':feedbackDone?`linear-gradient(135deg,${DIM_COLORS[classement[0]]},${DIM_COLORS[classement[0]]}CC)`:'#94A3B8', color:'#fff', border:'none', borderRadius:10, fontSize:14, fontWeight:700, cursor:pdfLoading?'not-allowed':'pointer', display:'inline-flex', alignItems:'center', gap:8, boxShadow:'0 4px 12px rgba(0,0,0,0.15)', opacity:feedbackDone?1:0.7 }}>
+            {pdfLoading
+              ? (lang==='fr'?'⏳ Génération en cours...':'⏳ Generating...')
+              : feedbackDone
+                ? (lang==='fr'?'⬇️ Télécharger le rapport PDF':'⬇️ Download PDF report')
+                : (lang==='fr'?'🔒 Feedback requis pour débloquer':'🔒 Feedback required to unlock')}
+          </button>
+
+          {!feedbackDone && (
+            <div style={{ marginTop:10, fontSize:11, color:'#94A3B8' }}>
+              {lang==='fr' ? '👆 Remplis le feedback ci-dessus pour débloquer le rapport' : '👆 Fill in the feedback above to unlock the report'}
+            </div>
+          )}
+        </div>
+
         {/* REFAIRE */}
         <div style={{ textAlign:'center', marginBottom:24 }}>
           <button onClick={() => { sessionStorage.clear(); navigate('/') }} style={{ padding:'10px 20px', border:'1.5px solid #E2E8F0', borderRadius:8, background:'#fff', color:'#64748B', fontSize:13, cursor:'pointer' }}>
