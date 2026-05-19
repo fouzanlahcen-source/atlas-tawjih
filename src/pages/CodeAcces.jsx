@@ -12,6 +12,7 @@ export default function CodeAcces() {
     if (!c) { setError('Merci de saisir un code.'); return }
 
     if (CODES_ADMIN.includes(c)) {
+      sessionStorage.setItem('code_acces', c)
       navigate('/formulaire')
       return
     }
@@ -31,6 +32,7 @@ export default function CodeAcces() {
 
     // Marquer comme utilisé
     localStorage.setItem('usedCodes', JSON.stringify([...used, c]))
+    sessionStorage.setItem('code_acces', c)
     navigate('/formulaire')
   }
 
