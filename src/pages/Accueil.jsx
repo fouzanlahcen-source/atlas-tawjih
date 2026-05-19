@@ -360,7 +360,14 @@ function FeedbackCard({ fb, t }) {
   const typeLabel = t.fb_types[fb.type] || fb.type
   const dimColor  = { eleve:'#7C3AED', tuteur:'#059669', centre:'#2563EB', etablissement:'#D97706' }[fb.type] || '#7C3AED'
   // Capitalise tout le texte
-  const cap = s => s ? String(s).split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : ''
+  const cap = s => {
+    if(!s) return ''
+    return String(s).split(' ').map(w => {
+      // Preserve words in parentheses like (SMB), (PC), (SVT)
+      if(w.startsWith('(') && w.endsWith(')')) return '(' + w.slice(1,-1).toUpperCase() + ')'
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+    }).join(' ')
+  }
   const prenom   = cap(fb.prenom)
   const initiale = prenom[0] || '?'
   // Filiere = profil field (ex: "Sciences Math", "Lettres"...)

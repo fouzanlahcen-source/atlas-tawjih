@@ -26,8 +26,8 @@ export async function envoyerFeedback(feedback) {
       prenom:  feedback.prenom  || '',
       ville:   feedback.ville   || '',
       profil:  feedback.profil  || '',
-      message: feedback.message || '',
       note:    String(feedback.note || ''),
+      message: feedback.message || '',
     })
     await fetch(`${API_URL}?${params}`, { method: 'GET', mode: 'no-cors' })
     return true
