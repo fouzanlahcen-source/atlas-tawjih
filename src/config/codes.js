@@ -1,21 +1,10 @@
-// ══════════════════════════════════════════════════════════
-// CODES D'ACCÈS — Atlas Tawjih
-// Pour ajouter un code : rajoute une ligne dans CODES_VALIDES
-// Pour supprimer : efface la ligne
-// Format : 'MON-CODE',
-// ══════════════════════════════════════════════════════════
-
 export const CODES_VALIDES = [
-  'ATLAS-2026',
+  'ATLAS-001',
+  'ATLAS-002',
+  'ATLAS-003',
   'TAWJIH-01',
   'TAWJIH-02',
-  'TAWJIH-03',
-  'TAWJIH-26',
-  'MAROC-2026',
-  'BAC-ATLAS',
-  'CENTRE-IDRAK',
-  'ADMIN-TEST',   // jamais bloqué — pour tes tests internes
+  // Ajoute tes codes ici, un par ligne
 ]
 
-// Codes admin — jamais bloqués même après usage
 export const CODES_ADMIN = ['ADMIN-TEST']
