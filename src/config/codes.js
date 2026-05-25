@@ -28,7 +28,8 @@ export const CODES_VALIDES = [
   'LABBANE#2026',
   'SABRI#2026',
   'CHARYF#2026',
-  'KAOUTAR#2026'
+  'KAOUTAR#2026',
+  'AITTMGUROUT#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
