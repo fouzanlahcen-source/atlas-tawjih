@@ -31,7 +31,8 @@ export const CODES_VALIDES = [
   'KAOUTAR#2026',
   'AITTMGUROUT#2026',
   'NADIR#2026',
-  'ENNACHI#2026'
+  'ENNACHI#2026',
+  'MISSOUR#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
