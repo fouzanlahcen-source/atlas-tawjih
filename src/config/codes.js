@@ -8,7 +8,9 @@ export const CODES_VALIDES = [
   'FIHRI@2026',
   'FHRI@2026',
   'ELBAYYAD#2026',
-  'MLIHAT#2026'
+  'MLIHAT#2026',
+  'EZZAROUAL#2026',
+  'ELMAAZOUZI#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
