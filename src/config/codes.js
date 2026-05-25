@@ -6,7 +6,7 @@ export const CODES_VALIDES = [
   'TAWJIH-02',
   'TEST#26',
   'FIHRI@2026',
-  'Fhri@2026'
+  'FHRI@2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
