@@ -25,7 +25,8 @@ export const CODES_VALIDES = [
   'BARRA@2026',
   'FARRAH@2026',
   'ELMAHNI#2026',
-  'LABBANE#2026'
+  'LABBANE#2026',
+  'SABRI#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
