@@ -4,7 +4,9 @@ export const CODES_VALIDES = [
   'ATLAS-003',
   'TAWJIH-01',
   'TAWJIH-02',
-  'TEST#26'
+  'TEST#26',
+  'FIHRI@2026',
+  'Fhri@2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
