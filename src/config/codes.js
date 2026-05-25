@@ -18,7 +18,8 @@ export const CODES_VALIDES = [
   'MOUTJI#2026',
   'BOURAKBAH#2026',
   'BOUABOUD#2026',
-  'TARIQ#2026'
+  'TARIQ#2026',
+  'LOUDINI#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
