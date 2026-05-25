@@ -47,7 +47,8 @@ export const CODES_VALIDES = [
   'CHAAIRI#2026',
   'HAMOUCH#2026',
   'MAGRONE#2026',
-  'AGOURRAM#2026'
+  'AGOURRAM#2026',
+  'ABEROUCH#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
