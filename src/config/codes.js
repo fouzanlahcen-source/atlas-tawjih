@@ -20,7 +20,8 @@ export const CODES_VALIDES = [
   'BOUABOUD#2026',
   'TARIQ#2026',
   'LOUDINI#2026',
-  'SHAIMID#2026'
+  'SHAIMID#2026',
+  'AITMBARK#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
