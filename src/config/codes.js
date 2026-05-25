@@ -34,7 +34,8 @@ export const CODES_VALIDES = [
   'ENNACHI#2026',
   'MISSOUR#2026',
   'AITABDENNEBI#2026',
-  'FATIMAZAHRA#2026'
+  'FATIMAZAHRA#2026',
+  'LAMAIZI#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
