@@ -10,7 +10,9 @@ export const CODES_VALIDES = [
   'ELBAYYAD#2026',
   'MLIHAT#2026',
   'EZZAROUAL#2026',
-  'ELMAAZOUZI#2026'
+  'ELMAAZOUZI#2026',
+  'MOUJIR#2026',
+  'ELMOURABIT#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
