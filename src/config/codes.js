@@ -53,7 +53,8 @@ export const CODES_VALIDES = [
   'AJRHAIDA#2026',
   'SADID#2026',
   'ELMESSYEH#26',
-  'ELBAZE#2026'
+  'ELBAZE#2026',
+  'ELATTAOUI#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
