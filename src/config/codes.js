@@ -60,7 +60,8 @@ export const CODES_VALIDES = [
   'AMROUCHE#2026',
   'ABOUNADI#2026',
   'BELKARKOUR#2026',
-  'SABER#2026'
+  'SABER#2026',
+  'ELMERHRAOUI#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
