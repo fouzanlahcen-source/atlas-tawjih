@@ -62,7 +62,8 @@ export const CODES_VALIDES = [
   'BELKARKOUR#2026',
   'SABER#2026',
   'ELMERHRAOUI#2026',
-  'GARAOUN#2026'
+  'GARAOUN#2026',
+  'ELOUALI#2026'
   // Ajoute tes codes ici, un par ligne
 ]
 
